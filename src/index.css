@@ -1,0 +1,173 @@
+@layer theme, base, components, utilities;
+
+
+
+.text-3xl{
+  color: #646cff;
+}
+
+
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.9);
+  background-color: #1e1e1e;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Links e botões */
+a {
+  font-weight: 600;
+  color: #7a82ff;
+  text-decoration: none;
+  transition: color 0.3s ease-in-out;
+}
+a:hover {
+  color: #4b52db;
+  text-decoration: underline;
+}
+
+/* Espaço entre cada tarefa */
+.task-item {
+  margin-bottom: 20px; /* Ajuste o valor conforme necessário */
+  border-radius: 12px;
+}
+
+/* Layout base */
+body {
+  margin: 0;
+  overflow-x: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background: radial-gradient(circle, #242424 20%, #1e1e1e 80%);
+  padding: 20px;
+  flex-direction: column; /* Para empilhar as tarefas verticalmente */
+}
+
+.container{
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Títulos e seções */
+h1,
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.btn{
+  text-align: center;
+}
+
+.mt-3{
+  text-align: center;
+}
+
+/* Título da tarefa na lista (maior que a prioridade) */
+.title-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 12px;
+}
+
+/* Prioridade na lista (menor que o título, mas maior que a descrição) */
+.priority-number {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Descrição na lista */
+.description-text {
+  font-size: 1.25rem;
+  text-align: center;
+}
+
+/* Botões */
+button {
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 0.7em 1.5em;
+  font-size: 1.1em;
+  font-weight: 600;
+  font-family: inherit;
+  background: linear-gradient(135deg, #323232, #1a1a1a);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+}
+button:hover {
+  border-color: #7a82ff;
+  background: linear-gradient(135deg, #3b3b3b, #242424);
+  transform: translateY(-2px);
+  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.4);
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* Tarefas concluídas */
+.completed-task {
+  text-decoration: line-through;
+  opacity: 0.6;
+  color: #b0b0b0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Textarea de descrição (para a criação de tarefa) */
+textarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #555;
+  background-color: #2d2d2d;
+  color: #fff;
+}
+
+/* Elementos editáveis in place */
+.editable {
+  outline: none;
+  width: 100%;
+  text-align: center;
+  min-height: 1.5em;
+}
+
+/* Responsividade para tema claro */
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background: #f5f5f5;
+  }
+  a {
+    color: #4b52db;
+  }
+  a:hover {
+    color: #646cff;
+  }
+  button {
+    background: linear-gradient(135deg, #e0e0e0, #f9f9f9);
+    color: black;
+  }
+  button:hover {
+    background: linear-gradient(135deg, #d0d0d0, #ebebeb);
+  }
+}
