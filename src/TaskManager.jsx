@@ -558,7 +558,7 @@ function TaskManager() {
                             onChange={(e) => setEditingAreaColor(e.target.value)}
                           />
                         </div>
-                        {/* Campo para adicionar tag via input */}
+                        {/* Campo para adicionar tag via input */}  
                         <div className="form-control">
                           <input
                             type="text"
