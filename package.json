@@ -4,10 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "start": "vite preview"
+  "dev": "vite",
+  "build": "vite build",
+  "start": "vite preview --port $PORT"
   },
+
   "dependencies": {
     "@tailwindcss/vite": "^4.0.3",
     "firebase": "^11.2.0",
