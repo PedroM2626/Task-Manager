@@ -66,7 +66,6 @@ function TaskManager() {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskTitleTextColor, setNewTaskTitleTextColor] = useState("#ffffff");
   const [newTaskDescription, setNewTaskDescription] = useState("");
-  // Estado para a cor da área da lista na criação (padrão cinza)
   const [newTaskAreaColor, setNewTaskAreaColor] = useState("#808080");
 
   // Estados para edição in place da tarefa
@@ -77,24 +76,22 @@ function TaskManager() {
   const [editingDescription, setEditingDescription] = useState("");
   const [editingTaskTags, setEditingTaskTags] = useState([]);
   const [editingTagInput, setEditingTagInput] = useState("");
-  // Estado para a cor da área da lista na edição
   const [editingAreaColor, setEditingAreaColor] = useState("");
 
-  // Estados para as tags globais (gerenciamento de tags)
+  // Estados para as tags globais
   const [availableTags, setAvailableTags] = useState([]);
   const [newTag, setNewTag] = useState("");
   const [newTagColor, setNewTagColor] = useState("#cccccc");
   const [newTagTextColor, setNewTagTextColor] = useState("#000000");
-  // As tags terão apenas bgColor e textColor
 
-  // Estados para gerenciamento de tags na visualização (painel de tags)
+  // Estados para gerenciamento de tags na visualização
   const [tagEditingTaskId, setTagEditingTaskId] = useState(null);
   const [tagEditingInput, setTagEditingInput] = useState("");
 
   // Estado para o usuário
   const [user, setUser] = useState(null);
 
-  // Refs para os elementos contentEditable na edição
+  // Refs para os elementos contentEditable
   const editingPriorityRef = useRef(null);
   const editingTitleRef = useRef(null);
   const editingDescriptionRef = useRef(null);
@@ -184,7 +181,7 @@ function TaskManager() {
       title: newTaskTitle,
       titleTextColor: newTaskTitleTextColor,
       description: newTaskDescription,
-      areaColor: newTaskAreaColor, // Cor da área da lista
+      areaColor: newTaskAreaColor,
       completed: false,
       userId: user.uid,
       tags: [],
@@ -441,9 +438,7 @@ function TaskManager() {
                     <span>{tag.name}</span>
                     <button
                       onClick={() =>
-                        setAvailableTags(
-                          availableTags.filter((t) => t.name !== tag.name)
-                        )
+                        setAvailableTags(availableTags.filter((t) => t.name !== tag.name))
                       }
                       className="btn btn-sm btn-danger"
                     >
@@ -465,9 +460,7 @@ function TaskManager() {
                   <motion.div
                     key={task.id}
                     style={{ backgroundColor: areaBg }}
-                    className={`rounded p-4 mb-3 shadow-sm w-100 ${
-                      task.completed ? "completed-task" : ""
-                    } task-item`}
+                    className={`rounded p-4 mb-3 shadow-sm w-100 ${task.completed ? "completed-task" : ""} task-item`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
@@ -558,18 +551,18 @@ function TaskManager() {
                             onChange={(e) => setEditingAreaColor(e.target.value)}
                           />
                         </div>
-                        {/* Campo para adicionar tag via input */}  
-                        <div className="form-control">
+                        {/* Campo para adicionar tag via input */}
+                        <div className="input-group mb-2">
                           <input
                             type="text"
                             className="form-control"
-                            placeholder="Digite a tag" 
+                            placeholder="Digite a tag"
                             value={editingTagInput}
                             onChange={(e) => setEditingTagInput(e.target.value)}
                           />
                           <button
                             onClick={() => handleAddEditingTag(task.id)}
-                            className="btn btn-danger mt-3"
+                            className="btn btn-outline-secondary"
                           >
                             Adicionar Tag
                           </button>
@@ -636,10 +629,7 @@ function TaskManager() {
                     ) : (
                       <div className="w-100">
                         {task.priority && (
-                          <div
-                            className="priority-number"
-                            style={{ color: getPriorityColor(task.priority) }}
-                          >
+                          <div className="priority-number" style={{ color: getPriorityColor(task.priority) }}>
                             {task.priority}
                           </div>
                         )}
@@ -668,11 +658,7 @@ function TaskManager() {
                               <span
                                 key={tag.name}
                                 className="px-2 py-1 rounded"
-                                style={{
-                                  backgroundColor: tag.bgColor,
-                                  color: tag.textColor,
-                                  margin: "4px",
-                                }}
+                                style={{ backgroundColor: tag.bgColor, color: tag.textColor, margin: "4px" }}
                               >
                                 {tag.name}
                               </span>
@@ -719,11 +705,7 @@ function TaskManager() {
                                   <div
                                     key={tag.name}
                                     className="d-flex align-items-center gap-1 rounded px-2 py-1"
-                                    style={{
-                                      backgroundColor: tag.bgColor,
-                                      color: tag.textColor,
-                                      margin: "4px",
-                                    }}
+                                    style={{ backgroundColor: tag.bgColor, color: tag.textColor, margin: "4px" }}
                                   >
                                     <span>{tag.name}</span>
                                     <button
@@ -735,10 +717,7 @@ function TaskManager() {
                                   </div>
                                 ))}
                             </div>
-                            <button
-                              onClick={() => setTagEditingTaskId(null)}
-                              className="btn btn-secondary btn-sm"
-                            >
+                            <button onClick={() => setTagEditingTaskId(null)} className="btn btn-secondary btn-sm">
                               Fechar Gerenciamento de Tags
                             </button>
                           </div>
@@ -755,6 +734,5 @@ function TaskManager() {
     </div>
   );
 }
-
 
 export default TaskManager;
