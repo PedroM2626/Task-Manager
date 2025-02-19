@@ -6,6 +6,6 @@ import process from 'process'; // Importa o objeto process do Node
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: Number(process.env.PORT) || 4173
+    port: Number(process.env.PORT) || 8080
   }
 });
