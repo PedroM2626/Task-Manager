@@ -1,11 +1,11 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 import process from 'process'; // Importa o objeto process do Node
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: Number(process.env.PORT) || 8080
+    host: '0.0.0.0', // Permite que a aplicação escute em todas as interfaces
+    port: Number(process.env.PORT) || 10000 // Usa a variável de ambiente PORT ou 10000 por padrão
   }
-});
+})
