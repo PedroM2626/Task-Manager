@@ -59,21 +59,32 @@ function restoreSelection(containerEl, savedSel) {
   containerEl.scrollTop = savedScrollTop;
 }
 
+// Array de fontes pré-definidas
+const predefinedFonts = ["Arial", "Helvetica", "Times New Roman", "Courier New", "Verdana"];
+
 function TaskManager() {
   // Estados para criação de tarefas
   const [tasks, setTasks] = useState([]);
   const [newTaskPriority, setNewTaskPriority] = useState(null);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskTitleTextColor, setNewTaskTitleTextColor] = useState("#ffffff");
+  const [newTaskTitleFont, setNewTaskTitleFont] = useState("Arial");
   const [newTaskDescription, setNewTaskDescription] = useState("");
+  const [newTaskDescColor, setNewTaskDescColor] = useState("#000000");
+  const [newTaskDescFont, setNewTaskDescFont] = useState("Arial");
+  const [newTaskDescFontSize, setNewTaskDescFontSize] = useState("14");
   const [newTaskAreaColor, setNewTaskAreaColor] = useState("#808080");
 
   // Estados para edição in place da tarefa
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingPriority, setEditingPriority] = useState(null);
   const [editingTitle, setEditingTitle] = useState("");
-  const [editingTitleTextColor, setEditingTitleTextColor] = useState("");
+  const [editingTitleTextColor, setEditingTitleTextColor] = useState("#ffffff");
+  const [editingTitleFont, setEditingTitleFont] = useState("Arial");
   const [editingDescription, setEditingDescription] = useState("");
+  const [editingDescColor, setEditingDescColor] = useState("#000000");
+  const [editingDescFont, setEditingDescFont] = useState("Arial");
+  const [editingDescFontSize, setEditingDescFontSize] = useState("14");
   const [editingTaskTags, setEditingTaskTags] = useState([]);
   const [editingTagInput, setEditingTagInput] = useState("");
   const [editingAreaColor, setEditingAreaColor] = useState("");
@@ -91,7 +102,7 @@ function TaskManager() {
   // Estado para o usuário
   const [user, setUser] = useState(null);
 
-  // Refs para os elementos contentEditable
+  // Refs para os elementos contentEditable na edição
   const editingPriorityRef = useRef(null);
   const editingTitleRef = useRef(null);
   const editingDescriptionRef = useRef(null);
@@ -180,7 +191,11 @@ function TaskManager() {
       priority: newTaskPriority ? parseInt(newTaskPriority) : null,
       title: newTaskTitle,
       titleTextColor: newTaskTitleTextColor,
+      titleFont: newTaskTitleFont,
       description: newTaskDescription,
+      descriptionColor: newTaskDescColor,
+      descriptionFont: newTaskDescFont,
+      descriptionFontSize: newTaskDescFontSize,
       areaColor: newTaskAreaColor,
       completed: false,
       userId: user.uid,
@@ -216,7 +231,11 @@ function TaskManager() {
     setEditingPriority(task.priority);
     setEditingTitle(task.title);
     setEditingTitleTextColor(task.titleTextColor);
+    setEditingTitleFont(task.titleFont || "Arial");
     setEditingDescription(task.description);
+    setEditingDescColor(task.descriptionColor || "#000000");
+    setEditingDescFont(task.descriptionFont || "Arial");
+    setEditingDescFontSize(task.descriptionFontSize || "14");
     setEditingTaskTags(task.tags || []);
     setEditingAreaColor(task.areaColor || "#808080");
     setEditingTagInput("");
@@ -228,7 +247,11 @@ function TaskManager() {
       priority: editingPriority ? parseInt(editingPriority) : null,
       title: editingTitle,
       titleTextColor: editingTitleTextColor,
+      titleFont: editingTitleFont,
       description: editingDescription,
+      descriptionColor: editingDescColor,
+      descriptionFont: editingDescFont,
+      descriptionFontSize: editingDescFontSize,
       tags: editingTaskTags,
       areaColor: editingAreaColor,
     };
@@ -247,7 +270,11 @@ function TaskManager() {
     setEditingPriority(null);
     setEditingTitle("");
     setEditingTitleTextColor("");
+    setEditingTitleFont("Arial");
     setEditingDescription("");
+    setEditingDescColor("#000000");
+    setEditingDescFont("Arial");
+    setEditingDescFontSize("14");
     setEditingTaskTags([]);
     setEditingTagInput("");
     setEditingAreaColor("");
@@ -302,14 +329,16 @@ function TaskManager() {
   async function handleRemoveTag(taskId, tagName) {
     const task = tasks.find((t) => t.id === taskId);
     if (task) {
-      const newTags = task.tags.filter((t) => t.name.toLowerCase() !== tagName.toLowerCase());
+      const newTags = task.tags.filter(
+        (t) => t.name.toLowerCase() !== tagName.toLowerCase()
+      );
       await updateTaskTags(taskId, newTags);
     }
   }
 
   return (
     <div className="container mt-4" style={{ maxWidth: "800px" }}>
-      {/* Cabeçalho com título e botão de logout centralizado */}
+      {/* Cabeçalho */}
       <div className="text-center mb-4">
         <h1 className="text-3xl font-bold">Task Manager</h1>
         {user && (
@@ -327,7 +356,7 @@ function TaskManager() {
         </div>
       ) : (
         <>
-          {/* Seção Nova Tarefa */}
+          {/* Nova Tarefa */}
           <div className="card mb-4 shadow">
             <div className="card-body">
               <h2 className="card-title text-center">Nova Tarefa</h2>
@@ -352,6 +381,17 @@ function TaskManager() {
                   title="Cor do Texto do Título"
                   className="form-control form-control-color"
                 />
+                <select
+                  className="form-select"
+                  value={newTaskTitleFont}
+                  onChange={(e) => setNewTaskTitleFont(e.target.value)}
+                >
+                  {predefinedFonts.map((font) => (
+                    <option key={font} value={font} style={{ fontFamily: font }}>
+                      {font}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="d-flex gap-2 mb-2">
                 <textarea
@@ -359,14 +399,45 @@ function TaskManager() {
                   value={newTaskDescription}
                   onChange={(e) => setNewTaskDescription(e.target.value)}
                   placeholder="Digite a descrição da tarefa..."
+                  style={{ whiteSpace: "pre-wrap" }}
                 />
+                <div className="d-flex flex-column gap-2">
+                  <input
+                    type="color"
+                    value={newTaskAreaColor}
+                    onChange={(e) => setNewTaskAreaColor(e.target.value)}
+                    title="Cor da Área da Lista"
+                    className="form-control form-control-color"
+                    style={{ maxWidth: "80px" }}
+                  />
+                  <input
+                    type="color"
+                    value={newTaskDescColor}
+                    onChange={(e) => setNewTaskDescColor(e.target.value)}
+                    title="Cor do Texto da Descrição"
+                    className="form-control form-control-color"
+                    style={{ maxWidth: "80px" }}
+                  />
+                </div>
+              </div>
+              <div className="d-flex gap-2 mb-2">
+                <select
+                  className="form-select"
+                  value={newTaskDescFont}
+                  onChange={(e) => setNewTaskDescFont(e.target.value)}
+                >
+                  {predefinedFonts.map((font) => (
+                    <option key={font} value={font} style={{ fontFamily: font }}>
+                      {font}
+                    </option>
+                  ))}
+                </select>
                 <input
-                  type="color"
-                  value={newTaskAreaColor}
-                  onChange={(e) => setNewTaskAreaColor(e.target.value)}
-                  title="Cor da Área da Lista"
-                  className="form-control form-control-color"
-                  style={{ maxWidth: "80px" }}
+                  type="number"
+                  className="form-control"
+                  placeholder="Tamanho da Fonte (ex: 14)"
+                  value={newTaskDescFontSize}
+                  onChange={(e) => setNewTaskDescFontSize(e.target.value)}
                 />
               </div>
               <button onClick={addTask} className="btn btn-success w-100">
@@ -375,7 +446,7 @@ function TaskManager() {
             </div>
           </div>
 
-          {/* Seção Gerenciar Tags Globais */}
+          {/* Gerenciar Tags Globais */}
           <div className="card mb-4 shadow">
             <div className="card-body">
               <h2 className="card-title text-center">Gerenciar Tags Globais</h2>
@@ -450,7 +521,7 @@ function TaskManager() {
             </div>
           </div>
 
-          {/* Seção Listas Criadas */}
+          {/* Listas Criadas */}
           <div className="card shadow">
             <div className="card-body">
               <h2 className="card-title text-center">Listas Criadas</h2>
@@ -507,10 +578,10 @@ function TaskManager() {
                                 }, 0);
                               }}
                               suppressContentEditableWarning={true}
+                              style={{ whiteSpace: "pre-wrap" }}
                             >
                               {editingTitle}
                             </div>
-                            {/* Seletor de cor para o título na edição */}
                             <div className="d-flex align-items-center gap-2">
                               <label className="mb-0">Cor do Título:</label>
                               <input
@@ -520,6 +591,20 @@ function TaskManager() {
                                 value={editingTitleTextColor}
                                 onChange={(e) => setEditingTitleTextColor(e.target.value)}
                               />
+                            </div>
+                            <div className="d-flex align-items-center gap-2">
+                              <label className="mb-0">Fonte do Título:</label>
+                              <select
+                                className="form-select"
+                                value={editingTitleFont}
+                                onChange={(e) => setEditingTitleFont(e.target.value)}
+                              >
+                                {predefinedFonts.map((font) => (
+                                  <option key={font} value={font} style={{ fontFamily: font }}>
+                                    {font}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
                           </div>
                         </div>
@@ -537,10 +622,10 @@ function TaskManager() {
                             }, 0);
                           }}
                           suppressContentEditableWarning={true}
+                          style={{ whiteSpace: "pre-wrap" }}
                         >
                           {editingDescription}
                         </div>
-                        {/* Campo para alterar a cor da área da lista na edição */}
                         <div className="d-flex align-items-center gap-2 mb-2">
                           <label className="mb-0">Cor da Área:</label>
                           <input
@@ -550,6 +635,42 @@ function TaskManager() {
                             value={editingAreaColor || "#808080"}
                             onChange={(e) => setEditingAreaColor(e.target.value)}
                           />
+                        </div>
+                        <div className="d-flex gap-2 mb-2">
+                          <div className="d-flex align-items-center gap-2">
+                            <label className="mb-0">Cor do Texto da Descrição:</label>
+                            <input
+                              type="color"
+                              className="form-control form-control-color"
+                              style={{ maxWidth: "80px" }}
+                              value={editingDescColor}
+                              onChange={(e) => setEditingDescColor(e.target.value)}
+                            />
+                          </div>
+                          <div className="d-flex align-items-center gap-2">
+                            <label className="mb-0">Fonte da Descrição:</label>
+                            <select
+                              className="form-select"
+                              value={editingDescFont}
+                              onChange={(e) => setEditingDescFont(e.target.value)}
+                            >
+                              {predefinedFonts.map((font) => (
+                                <option key={font} value={font} style={{ fontFamily: font }}>
+                                  {font}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="d-flex align-items-center gap-2">
+                            <label className="mb-0">Tamanho da Fonte:</label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              style={{ maxWidth: "80px" }}
+                              value={editingDescFontSize}
+                              onChange={(e) => setEditingDescFontSize(e.target.value)}
+                            />
+                          </div>
                         </div>
                         {/* Campo para adicionar tag via input */}
                         <div className="input-group mb-2">
@@ -637,6 +758,7 @@ function TaskManager() {
                           className="title-number"
                           style={{
                             color: task.titleTextColor,
+                            fontFamily: task.titleFont || "Arial",
                             textAlign: task.textAlignTitle || "center",
                             wordWrap: "break-word",
                           }}
@@ -646,6 +768,9 @@ function TaskManager() {
                         <div
                           className="description-text"
                           style={{
+                            color: task.descriptionColor || "#000000",
+                            fontFamily: task.descriptionFont || "Arial",
+                            fontSize: task.descriptionFontSize ? task.descriptionFontSize + "px" : "14px",
                             textAlign: task.textAlignDescription || "center",
                             wordWrap: "break-word",
                           }}
@@ -658,7 +783,11 @@ function TaskManager() {
                               <span
                                 key={tag.name}
                                 className="px-2 py-1 rounded"
-                                style={{ backgroundColor: tag.bgColor, color: tag.textColor, margin: "4px" }}
+                                style={{
+                                  backgroundColor: tag.bgColor,
+                                  color: tag.textColor,
+                                  margin: "4px",
+                                }}
                               >
                                 {tag.name}
                               </span>
@@ -705,7 +834,11 @@ function TaskManager() {
                                   <div
                                     key={tag.name}
                                     className="d-flex align-items-center gap-1 rounded px-2 py-1"
-                                    style={{ backgroundColor: tag.bgColor, color: tag.textColor, margin: "4px" }}
+                                    style={{
+                                      backgroundColor: tag.bgColor,
+                                      color: tag.textColor,
+                                      margin: "4px",
+                                    }}
                                   >
                                     <span>{tag.name}</span>
                                     <button
