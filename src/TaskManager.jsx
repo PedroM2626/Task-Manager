@@ -60,7 +60,7 @@ function restoreSelection(containerEl, savedSel) {
 }
 
 // Array de fontes pré-definidas
-const predefinedFonts = ["Arial", "Helvetica", "Times New Roman", "Courier New", "Verdana"];
+const predefinedFonts = ["Arial", "Helvetica", "Times New Roman", "Courier New", "Verdana", "Sans", "Calibri", "Futura", "Roboto", "Open Sans", "Garamond"];
 
 function TaskManager() {
   // Estados para criação de tarefas
