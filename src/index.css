@@ -1,5 +1,21 @@
 @layer theme, base, components, utilities;
 
+/* Centralização forçada */
+.force-center {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+
+.force-center * {
+  text-align: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
 /* Glass morphism base styles */
 .glass-card {
   backdrop-filter: blur(20px);
