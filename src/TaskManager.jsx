@@ -154,7 +154,7 @@ function TaskManager() {
     }
   }
 
-  // Função auxiliar para alternar a centralizaç��o (ciclo: left -> center -> right -> left)
+  // Função auxiliar para alternar a centralização (ciclo: left -> center -> right -> left)
   function cycleAlignment(current) {
     if (current === "left") return "center";
     if (current === "center") return "right";
@@ -337,8 +337,8 @@ function TaskManager() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 flex flex-col">
+      <div className="max-w-4xl mx-auto w-full">
         {/* Cabeçalho */}
         <motion.div 
           className="text-center mb-8"
