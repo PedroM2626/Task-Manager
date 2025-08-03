@@ -363,7 +363,7 @@ function TaskManager() {
 
         {!user ? (
           <div
-            className="flex items-center justify-center w-full"
+            className="flex items-center justify-center w-full force-center"
             style={{
               minHeight: "70vh",
               display: "flex",
