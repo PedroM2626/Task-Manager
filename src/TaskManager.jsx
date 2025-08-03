@@ -154,7 +154,7 @@ function TaskManager() {
     }
   }
 
-  // Função auxiliar para alternar a centralização (ciclo: left -> center -> right -> left)
+  // Função auxiliar para alternar a centralizaç��o (ciclo: left -> center -> right -> left)
   function cycleAlignment(current) {
     if (current === "left") return "center";
     if (current === "center") return "right";
@@ -362,25 +362,29 @@ function TaskManager() {
         </motion.div>
 
         {!user ? (
-          <motion.div 
-            className="text-center"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="p-12 rounded-3xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
-              <h2 className="text-3xl font-semibold text-white mb-6">Bem-vindo!</h2>
-              <p className="text-gray-300 mb-8">Faça login para gerenciar suas tarefas</p>
-              <motion.button 
-                onClick={login} 
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg transition-all duration-200"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                🔑 Login com Google
-              </motion.button>
-            </div>
-          </motion.div>
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <motion.div
+              className="text-center w-full max-w-md mx-auto"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="p-12 rounded-3xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
+                <h2 className="text-3xl font-semibold text-white mb-6 text-center">Bem-vindo!</h2>
+                <p className="text-gray-300 mb-8 text-center">Faça login para gerenciar suas tarefas</p>
+                <div className="flex justify-center">
+                  <motion.button
+                    onClick={login}
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg transition-all duration-200"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    🔑 Login com Google
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         ) : (
           <>
             {/* Nova Tarefa */}
