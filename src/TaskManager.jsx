@@ -362,20 +362,53 @@ function TaskManager() {
         </motion.div>
 
         {!user ? (
-          <div className="flex items-center justify-center min-h-[60vh]">
+          <div
+            className="flex items-center justify-center w-full"
+            style={{
+              minHeight: "70vh",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              textAlign: "center"
+            }}
+          >
             <motion.div
-              className="text-center w-full max-w-md mx-auto"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                width: "100%",
+                maxWidth: "500px",
+                margin: "0 auto"
+              }}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="p-12 rounded-3xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
-                <h2 className="text-3xl font-semibold text-white mb-6 text-center">Bem-vindo!</h2>
-                <p className="text-gray-300 mb-8 text-center">Faça login para gerenciar suas tarefas</p>
-                <div className="flex justify-center">
+              <div
+                className="p-12 rounded-3xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl"
+                style={{ textAlign: "center", width: "100%" }}
+              >
+                <h2
+                  className="text-3xl font-semibold text-white mb-6"
+                  style={{ textAlign: "center", margin: "0 auto 1.5rem auto" }}
+                >
+                  Bem-vindo!
+                </h2>
+                <p
+                  className="text-gray-300 mb-8"
+                  style={{ textAlign: "center", margin: "0 auto 2rem auto" }}
+                >
+                  Faça login para gerenciar suas tarefas
+                </p>
+                <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
                   <motion.button
                     onClick={login}
                     className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg transition-all duration-200"
+                    style={{ margin: "0 auto", textAlign: "center" }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
