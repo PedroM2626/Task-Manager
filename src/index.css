@@ -1,15 +1,66 @@
 @layer theme, base, components, utilities;
 
+/* Centralização forçada */
+.force-center {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+}
 
+.force-center * {
+  text-align: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
 
-.text-3xl{
+/* Glass morphism base styles */
+.glass-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+}
+
+.glass-input, .glass-textarea, .glass-select {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.glass-input::placeholder, .glass-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Title styling */
+.text-3xl {
   color: #646cff;
 }
 
-
-
+/* Root styles */
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.6;
   font-weight: 400;
   color-scheme: light dark;
@@ -21,47 +72,49 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Links e botões */
+/* Links */
 a {
   font-weight: 600;
   color: #7a82ff;
   text-decoration: none;
   transition: color 0.3s ease-in-out;
 }
+
 a:hover {
   color: #4b52db;
   text-decoration: underline;
 }
 
-/* Espaço entre cada tarefa */
-.task-item {
-  margin-bottom: 20px; /* Ajuste o valor conforme necessário */
-  border-radius: 12px;
-}
-
-/* Layout base */
+/* Base body styles */
 body {
   margin: 0;
-  overflow-x: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   min-width: 320px;
   min-height: 100vh;
-  background: radial-gradient(circle, #242424 20%, #1e1e1e 80%);
-  padding: 20px;
-  flex-direction: column; /* Para empilhar as tarefas verticalmente */
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 25%, #2d1b69 50%, #1a1a3a 75%, #0f0f23 100%);
+  overflow-x: hidden;
 }
 
-.container{
+/* Task item spacing */
+.task-item {
+  margin-bottom: 20px;
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.task-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Container styles */
+.container {
   text-align: center;
   align-items: center;
   justify-content: center;
 }
 
-/* Títulos e seções */
-h1,
-.section-title {
+/* Typography */
+h1, .section-title {
   font-size: 2rem;
   font-weight: 700;
   text-align: center;
@@ -69,61 +122,83 @@ h1,
   margin-bottom: 1rem;
 }
 
-.btn{
+/* Button base styles */
+.btn {
   text-align: center;
 }
 
-.mt-3{
+.mt-3 {
   text-align: center;
 }
 
-/* Título da tarefa na lista (maior que a prioridade) */
+/* Task content styles */
 .title-number {
   font-size: 2.5rem;
   font-weight: 700;
   text-align: center;
   border-radius: 12px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Prioridade na lista (menor que o título, mas maior que a descrição) */
 .priority-number {
   font-size: 2rem;
   font-weight: 700;
   text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* Descrição na lista */
 .description-text {
   font-size: 1.25rem;
   text-align: center;
+  line-height: 1.6;
 }
 
-/* Botões */
+/* Modern button styles */
 button {
   border-radius: 12px;
-  border: 1px solid transparent;
+  border: none;
   padding: 0.7em 1.5em;
   font-size: 1.1em;
   font-weight: 600;
   font-family: inherit;
-  background: linear-gradient(135deg, #323232, #1a1a1a);
-  color: white;
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-}
-button:hover {
-  border-color: #7a82ff;
-  background: linear-gradient(135deg, #3b3b3b, #242424);
-  transform: translateY(-2px);
-  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.4);
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Tarefas concluídas */
+button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+button:hover::before {
+  left: 100%;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button:focus,
+button:focus-visible {
+  outline: 3px solid rgba(124, 130, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Completed tasks */
 .completed-task {
   text-decoration: line-through;
   opacity: 0.6;
@@ -131,43 +206,162 @@ button:focus-visible {
   transition: opacity 0.3s ease-in-out;
 }
 
-/* Textarea de descrição (para a criação de tarefa) */
+/* Form elements */
 textarea {
   width: 100%;
   min-height: 80px;
   resize: vertical;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #555;
-  background-color: #2d2d2d;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.1);
   color: #fff;
+  font-family: inherit;
+  transition: all 0.3s ease;
 }
 
-/* Elementos editáveis in place */
+textarea:focus {
+  outline: none;
+  border-color: #7a82ff;
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 20px rgba(124, 130, 255, 0.3);
+}
+
+/* Editable elements */
 .editable {
   outline: none;
   width: 100%;
   text-align: center;
   min-height: 1.5em;
+  transition: all 0.3s ease;
 }
 
-/* Responsividade para tema claro */
+.editable:focus {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(124, 130, 255, 0.4);
+}
+
+/* Color inputs */
+input[type="color"] {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+input[type="color"]:hover {
+  transform: scale(1.1);
+}
+
+/* Select elements */
+select {
+  cursor: pointer;
+}
+
+select option {
+  background-color: #2d2d2d;
+  color: white;
+  padding: 8px;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .text-6xl {
+    font-size: 3rem;
+  }
+  
+  .p-12 {
+    padding: 2rem;
+  }
+  
+  .flex-wrap {
+    flex-direction: column;
+  }
+  
+  .gap-3 > * {
+    margin-bottom: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .text-6xl {
+    font-size: 2.5rem;
+  }
+  
+  .text-3xl {
+    font-size: 1.8rem;
+  }
+  
+  .text-2xl {
+    font-size: 1.5rem;
+  }
+  
+  .px-8 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .py-4 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+}
+
+/* Light mode support */
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background: #f5f5f5;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 25%, #dee2e6 50%, #e9ecef 75%, #f8f9fa 100%);
   }
+  
+  .glass-card {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .glass-input, .glass-textarea, .glass-select {
+    background: rgba(255, 255, 255, 0.6);
+    color: #213547;
+    border-color: rgba(0, 0, 0, 0.2);
+  }
+  
+  .glass-input::placeholder, .glass-textarea::placeholder {
+    color: rgba(0, 0, 0, 0.6);
+  }
+  
   a {
     color: #4b52db;
   }
+  
   a:hover {
     color: #646cff;
-  }
-  button {
-    background: linear-gradient(135deg, #e0e0e0, #f9f9f9);
-    color: black;
-  }
-  button:hover {
-    background: linear-gradient(135deg, #d0d0d0, #ebebeb);
   }
 }

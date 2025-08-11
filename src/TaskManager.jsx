@@ -337,39 +337,108 @@ function TaskManager() {
   }
 
   return (
-    <div className="container mt-4" style={{ maxWidth: "800px" }}>
-      {/* Cabeçalho */}
-      <div className="text-center mb-4">
-        <h1 className="text-3xl font-bold">Task Manager</h1>
-        {user && (
-          <button onClick={logout} className="btn btn-danger mt-3">
-            🚪 Sair
-          </button>
-        )}
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 flex flex-col">
+      <div className="max-w-4xl mx-auto w-full">
+        {/* Cabeçalho */}
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h1 className="text-6xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-6">
+            ✨ Task Manager ✨
+          </h1>
+          {user && (
+            <motion.button 
+              onClick={logout} 
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              🚪 Sair
+            </motion.button>
+          )}
+        </motion.div>
 
-      {!user ? (
-        <div className="text-center">
-          <button onClick={login} className="btn btn-primary btn-lg">
-            🔑 Login com Google
-          </button>
-        </div>
-      ) : (
-        <>
-          {/* Nova Tarefa */}
-          <div className="card mb-4 shadow">
-            <div className="card-body">
-              <h2 className="card-title text-center">Nova Tarefa</h2>
-              <div className="d-flex gap-2 mb-2">
+        {!user ? (
+          <div
+            className="flex items-center justify-center w-full force-center"
+            style={{
+              minHeight: "70vh",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              textAlign: "center"
+            }}
+          >
+            <motion.div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                width: "100%",
+                maxWidth: "500px",
+                margin: "0 auto"
+              }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div
+                className="p-12 rounded-3xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl"
+                style={{ textAlign: "center", width: "100%" }}
+              >
+                <h2
+                  className="text-3xl font-semibold text-white mb-6"
+                  style={{ textAlign: "center", margin: "0 auto 1.5rem auto" }}
+                >
+                  Bem-vindo!
+                </h2>
+                <p
+                  className="text-gray-300 mb-8"
+                  style={{ textAlign: "center", margin: "0 auto 2rem auto" }}
+                >
+                  Faça login para gerenciar suas tarefas
+                </p>
+                <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+                  <motion.button
+                    onClick={login}
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg transition-all duration-200"
+                    style={{ margin: "0 auto", textAlign: "center" }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    🔑 Login com Google
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        ) : (
+          <>
+            {/* Nova Tarefa */}
+            <motion.div 
+              className="p-6 rounded-3xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <h2 className="text-2xl font-bold text-center text-white mb-6">✨ Nova Tarefa</h2>
+              
+              <div className="flex flex-wrap gap-3 mb-4">
                 <input
                   type="number"
-                  className="form-control text-center"
+                  className="flex-1 min-w-24 px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-gray-300 text-center focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
                   placeholder="Prioridade"
                   value={newTaskPriority || ""}
                   onChange={(e) => setNewTaskPriority(e.target.value)}
                 />
                 <input
-                  className="form-control text-center"
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-gray-300 text-center focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   placeholder="Título da tarefa"
@@ -379,100 +448,110 @@ function TaskManager() {
                   value={newTaskTitleTextColor}
                   onChange={(e) => setNewTaskTitleTextColor(e.target.value)}
                   title="Cor do Texto do Título"
-                  className="form-control form-control-color"
+                  className="w-16 h-12 rounded-xl border-2 border-white/30 cursor-pointer hover:border-purple-400 transition-all duration-200"
                 />
                 <select
-                  className="form-select"
+                  className="px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
                   value={newTaskTitleFont}
                   onChange={(e) => setNewTaskTitleFont(e.target.value)}
                 >
                   {predefinedFonts.map((font) => (
-                    <option key={font} value={font} style={{ fontFamily: font }}>
+                    <option key={font} value={font} style={{ fontFamily: font, color: 'black' }}>
                       {font}
                     </option>
                   ))}
                 </select>
               </div>
-              <div className="d-flex gap-2 mb-2">
+              
+              <div className="flex gap-3 mb-4">
                 <textarea
-                  className="form-control"
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200 min-h-24 resize-vertical"
                   value={newTaskDescription}
                   onChange={(e) => setNewTaskDescription(e.target.value)}
                   placeholder="Digite a descrição da tarefa..."
                   style={{ whiteSpace: "pre-wrap" }}
                 />
-                <div className="d-flex flex-column gap-2">
+                <div className="flex flex-col gap-3">
                   <input
                     type="color"
                     value={newTaskAreaColor}
                     onChange={(e) => setNewTaskAreaColor(e.target.value)}
                     title="Cor da Área da Lista"
-                    className="form-control form-control-color"
-                    style={{ maxWidth: "80px" }}
+                    className="w-16 h-12 rounded-xl border-2 border-white/30 cursor-pointer hover:border-purple-400 transition-all duration-200"
                   />
                   <input
                     type="color"
                     value={newTaskDescColor}
                     onChange={(e) => setNewTaskDescColor(e.target.value)}
                     title="Cor do Texto da Descrição"
-                    className="form-control form-control-color"
-                    style={{ maxWidth: "80px" }}
+                    className="w-16 h-12 rounded-xl border-2 border-white/30 cursor-pointer hover:border-purple-400 transition-all duration-200"
                   />
                 </div>
               </div>
-              <div className="d-flex gap-2 mb-2">
+              
+              <div className="flex gap-3 mb-6">
                 <select
-                  className="form-select"
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
                   value={newTaskDescFont}
                   onChange={(e) => setNewTaskDescFont(e.target.value)}
                 >
                   {predefinedFonts.map((font) => (
-                    <option key={font} value={font} style={{ fontFamily: font }}>
+                    <option key={font} value={font} style={{ fontFamily: font, color: 'black' }}>
                       {font}
                     </option>
                   ))}
                 </select>
                 <input
                   type="number"
-                  className="form-control"
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
                   placeholder="Tamanho da Fonte (ex: 14)"
                   value={newTaskDescFontSize}
                   onChange={(e) => setNewTaskDescFontSize(e.target.value)}
                 />
               </div>
-              <button onClick={addTask} className="btn btn-success w-100">
+              
+              <motion.button 
+                onClick={addTask} 
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-4 rounded-xl font-semibold text-lg shadow-lg transition-all duration-200"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 ➕ Adicionar Tarefa
-              </button>
-            </div>
-          </div>
+              </motion.button>
+            </motion.div>
 
-          {/* Gerenciar Tags Globais */}
-          <div className="card mb-4 shadow">
-            <div className="card-body">
-              <h2 className="card-title text-center">Gerenciar Tags Globais</h2>
-              <div className="d-flex gap-2 mb-2">
+            {/* Gerenciar Tags Globais */}
+            <motion.div 
+              className="p-6 rounded-3xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <h2 className="text-2xl font-bold text-center text-white mb-6">🏷️ Gerenciar Tags Globais</h2>
+              
+              <div className="flex gap-3 mb-4">
                 <input
                   type="text"
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
                   placeholder="Nome da tag"
-                  className="form-control text-center"
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-gray-300 text-center focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
                 />
                 <input
                   type="color"
                   value={newTagColor}
                   onChange={(e) => setNewTagColor(e.target.value)}
                   title="Cor de Fundo da Tag"
-                  className="form-control form-control-color"
+                  className="w-16 h-12 rounded-xl border-2 border-white/30 cursor-pointer hover:border-purple-400 transition-all duration-200"
                 />
                 <input
                   type="color"
                   value={newTagTextColor}
                   onChange={(e) => setNewTagTextColor(e.target.value)}
                   title="Cor do Texto da Tag"
-                  className="form-control form-control-color"
+                  className="w-16 h-12 rounded-xl border-2 border-white/30 cursor-pointer hover:border-purple-400 transition-all duration-200"
                 />
-                <button
+                <motion.button
                   onClick={() => {
                     if (newTag.trim()) {
                       if (
@@ -490,380 +569,276 @@ function TaskManager() {
                       setNewTagTextColor("#000000");
                     }
                   }}
-                  className="btn btn-info"
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   + Tag
-                </button>
+                </motion.button>
               </div>
-              <div className="d-flex flex-wrap justify-content-center gap-2">
+              
+              <div className="flex flex-wrap justify-center gap-2">
                 {availableTags.map((tag) => (
-                  <div
+                  <motion.div
                     key={tag.name}
-                    className="d-flex align-items-center gap-1 px-2 py-1 rounded"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl shadow-lg"
                     style={{
                       backgroundColor: tag.bgColor,
                       color: tag.textColor,
-                      margin: "4px",
                     }}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
                   >
                     <span>{tag.name}</span>
                     <button
                       onClick={() =>
                         setAvailableTags(availableTags.filter((t) => t.name !== tag.name))
                       }
-                      className="btn btn-sm btn-danger"
+                      className="bg-red-500 hover:bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs transition-all duration-200"
                     >
-                      x
+                      ×
                     </button>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </div>
-          </div>
+            </motion.div>
 
-          {/* Listas Criadas */}
-          <div className="card shadow">
-            <div className="card-body">
-              <h2 className="card-title text-center">Listas Criadas</h2>
-              {tasks.map((task) => {
-                const areaBg = task.areaColor || "#808080";
-                return (
-                  <motion.div
-                    key={task.id}
-                    style={{ backgroundColor: areaBg }}
-                    className={`rounded p-4 mb-3 shadow-sm w-100 ${task.completed ? "completed-task" : ""} task-item`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <div className="d-flex justify-content-end mb-2">
-                      <input
-                        type="checkbox"
-                        checked={task.completed}
-                        onChange={() => toggleTask(task.id, task.completed)}
-                        className="form-check-input"
-                      />
-                    </div>
-                    {editingTaskId === task.id ? (
-                      <div className="w-100">
-                        <div className="d-flex gap-2 mb-2">
-                          <div
-                            contentEditable
-                            ref={(el) => (editingPriorityRef.current = el)}
-                            className="priority-number editable"
-                            onInput={(e) => {
-                              const saved = saveSelection(editingPriorityRef.current);
-                              const savedScroll = window.pageYOffset;
-                              setEditingPriority(e.currentTarget.textContent);
-                              setTimeout(() => {
-                                restoreSelection(editingPriorityRef.current, saved);
-                                window.scrollTo(0, savedScroll);
-                              }, 0);
-                            }}
-                            suppressContentEditableWarning={true}
-                          >
-                            {editingPriority}
-                          </div>
-                          <div className="d-flex flex-column gap-1">
+            {/* Listas Criadas */}
+            <motion.div 
+              className="p-6 rounded-3xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <h2 className="text-2xl font-bold text-center text-white mb-6">📋 Suas Tarefas</h2>
+              
+              <div className="space-y-4">
+                {tasks.map((task, index) => {
+                  const areaBg = task.areaColor || "#808080";
+                  return (
+                    <motion.div
+                      key={task.id}
+                      style={{ backgroundColor: areaBg }}
+                      className={`rounded-2xl p-6 shadow-xl ${task.completed ? "opacity-60" : ""} backdrop-blur-sm`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: task.completed ? 0.6 : 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <div className="flex justify-end mb-4">
+                        <input
+                          type="checkbox"
+                          checked={task.completed}
+                          onChange={() => toggleTask(task.id, task.completed)}
+                          className="w-5 h-5 rounded focus:ring-2 focus:ring-purple-400"
+                        />
+                      </div>
+                      
+                      {editingTaskId === task.id ? (
+                        <div className="space-y-4">
+                          <div className="flex gap-3">
                             <div
                               contentEditable
-                              ref={(el) => (editingTitleRef.current = el)}
-                              className="title-number editable"
+                              ref={(el) => (editingPriorityRef.current = el)}
+                              className="priority-number px-4 py-2 bg-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
                               onInput={(e) => {
-                                const saved = saveSelection(editingTitleRef.current);
-                                const savedScroll = window.pageYOffset;
-                                setEditingTitle(e.currentTarget.textContent);
+                                const saved = saveSelection(editingPriorityRef.current);
+                                setEditingPriority(e.currentTarget.textContent);
                                 setTimeout(() => {
-                                  restoreSelection(editingTitleRef.current, saved);
-                                  window.scrollTo(0, savedScroll);
+                                  restoreSelection(editingPriorityRef.current, saved);
                                 }, 0);
                               }}
                               suppressContentEditableWarning={true}
-                              style={{ whiteSpace: "pre-wrap" }}
                             >
-                              {editingTitle}
+                              {editingPriority}
                             </div>
-                            <div className="d-flex align-items-center gap-2">
-                              <label className="mb-0">Cor do Título:</label>
-                              <input
-                                type="color"
-                                className="form-control form-control-color"
-                                style={{ maxWidth: "80px" }}
-                                value={editingTitleTextColor}
-                                onChange={(e) => setEditingTitleTextColor(e.target.value)}
-                              />
-                            </div>
-                            <div className="d-flex align-items-center gap-2">
-                              <label className="mb-0">Fonte do Título:</label>
-                              <select
-                                className="form-select"
-                                value={editingTitleFont}
-                                onChange={(e) => setEditingTitleFont(e.target.value)}
+                            <div className="flex-1 space-y-3">
+                              <div
+                                contentEditable
+                                ref={(el) => (editingTitleRef.current = el)}
+                                className="title-number px-4 py-2 bg-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                onInput={(e) => {
+                                  const saved = saveSelection(editingTitleRef.current);
+                                  setEditingTitle(e.currentTarget.textContent);
+                                  setTimeout(() => {
+                                    restoreSelection(editingTitleRef.current, saved);
+                                  }, 0);
+                                }}
+                                suppressContentEditableWarning={true}
+                                style={{ whiteSpace: "pre-wrap" }}
                               >
-                                {predefinedFonts.map((font) => (
-                                  <option key={font} value={font} style={{ fontFamily: font }}>
-                                    {font}
-                                  </option>
-                                ))}
-                              </select>
+                                {editingTitle}
+                              </div>
+                              <div className="flex gap-3">
+                                <label className="text-white text-sm">Cor:</label>
+                                <input
+                                  type="color"
+                                  className="w-12 h-8 rounded border-2 border-white/30"
+                                  value={editingTitleTextColor}
+                                  onChange={(e) => setEditingTitleTextColor(e.target.value)}
+                                />
+                                <select
+                                  className="flex-1 px-3 py-1 rounded bg-white/20 border border-white/30 text-white"
+                                  value={editingTitleFont}
+                                  onChange={(e) => setEditingTitleFont(e.target.value)}
+                                >
+                                  {predefinedFonts.map((font) => (
+                                    <option key={font} value={font} style={{ fontFamily: font, color: 'black' }}>
+                                      {font}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div
-                          contentEditable
-                          ref={(el) => (editingDescriptionRef.current = el)}
-                          className="description-text editable mb-2"
-                          onInput={(e) => {
-                            const saved = saveSelection(editingDescriptionRef.current);
-                            const savedScroll = window.pageYOffset;
-                            setEditingDescription(e.currentTarget.textContent);
-                            setTimeout(() => {
-                              restoreSelection(editingDescriptionRef.current, saved);
-                              window.scrollTo(0, savedScroll);
-                            }, 0);
-                          }}
-                          suppressContentEditableWarning={true}
-                          style={{ whiteSpace: "pre-wrap" }}
-                        >
-                          {editingDescription}
-                        </div>
-                        <div className="d-flex align-items-center gap-2 mb-2">
-                          <label className="mb-0">Cor da Área:</label>
-                          <input
-                            type="color"
-                            className="form-control form-control-color"
-                            style={{ maxWidth: "80px" }}
-                            value={editingAreaColor || "#808080"}
-                            onChange={(e) => setEditingAreaColor(e.target.value)}
-                          />
-                        </div>
-                        <div className="d-flex gap-2 mb-2">
-                          <div className="d-flex align-items-center gap-2">
-                            <label className="mb-0">Cor do Texto da Descrição:</label>
-                            <input
-                              type="color"
-                              className="form-control form-control-color"
-                              style={{ maxWidth: "80px" }}
-                              value={editingDescColor}
-                              onChange={(e) => setEditingDescColor(e.target.value)}
-                            />
-                          </div>
-                          <div className="d-flex align-items-center gap-2">
-                            <label className="mb-0">Fonte da Descrição:</label>
-                            <select
-                              className="form-select"
-                              value={editingDescFont}
-                              onChange={(e) => setEditingDescFont(e.target.value)}
-                            >
-                              {predefinedFonts.map((font) => (
-                                <option key={font} value={font} style={{ fontFamily: font }}>
-                                  {font}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="d-flex align-items-center gap-2">
-                            <label className="mb-0">Tamanho da Fonte:</label>
-                            <input
-                              type="number"
-                              className="form-control"
-                              style={{ maxWidth: "80px" }}
-                              value={editingDescFontSize}
-                              onChange={(e) => setEditingDescFontSize(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        {/* Campo para adicionar tag via input */}
-                        <div className="input-group mb-2">
-                          <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Digite a tag"
-                            value={editingTagInput}
-                            onChange={(e) => setEditingTagInput(e.target.value)}
-                          />
-                          <button
-                            onClick={() => handleAddEditingTag(task.id)}
-                            className="btn btn-outline-secondary"
+                          
+                          <div
+                            contentEditable
+                            ref={(el) => (editingDescriptionRef.current = el)}
+                            className="description-text px-4 py-3 bg-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+                            onInput={(e) => {
+                              const saved = saveSelection(editingDescriptionRef.current);
+                              setEditingDescription(e.currentTarget.textContent);
+                              setTimeout(() => {
+                                restoreSelection(editingDescriptionRef.current, saved);
+                              }, 0);
+                            }}
+                            suppressContentEditableWarning={true}
+                            style={{ whiteSpace: "pre-wrap" }}
                           >
-                            Adicionar Tag
-                          </button>
+                            {editingDescription}
+                          </div>
+                          
+                          <div className="flex gap-3 justify-center">
+                            <motion.button 
+                              onClick={saveEditing} 
+                              className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl transition-all duration-200"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              💾 Salvar
+                            </motion.button>
+                            <motion.button 
+                              onClick={cancelEditing} 
+                              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-xl transition-all duration-200"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              ❌ Cancelar
+                            </motion.button>
+                          </div>
                         </div>
-                        {/* Select para escolher uma tag global já existente */}
-                        <div className="mb-2">
-                          <select
-                            className="form-select"
-                            defaultValue=""
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                handleSelectTag(task.id, e.target.value);
-                              }
+                      ) : (
+                        <div className="space-y-4">
+                          {task.priority && (
+                            <div 
+                              className="priority-number text-center font-bold text-2xl"
+                              style={{ color: getPriorityColor(task.priority) }}
+                            >
+                              {task.priority}
+                            </div>
+                          )}
+                          
+                          <div
+                            className={`title-number text-3xl font-bold ${task.completed ? "line-through" : ""}`}
+                            style={{
+                              color: task.titleTextColor,
+                              fontFamily: task.titleFont || "Arial",
+                              textAlign: task.textAlignTitle || "center",
+                              wordWrap: "break-word",
                             }}
                           >
-                            <option value="" disabled>
-                              Selecione uma tag existente
-                            </option>
-                            {availableTags
-                              .filter(
-                                (t) =>
-                                  !task.tags ||
-                                  !task.tags.some(
-                                    (tag) => tag.name.toLowerCase() === t.name.toLowerCase()
-                                  )
-                              )
-                              .map((tag) => (
-                                <option key={tag.name} value={tag.name}>
+                            {task.title}
+                          </div>
+                          
+                          <div
+                            className={`description-text text-lg ${task.completed ? "line-through" : ""}`}
+                            style={{
+                              color: task.descriptionColor || "#000000",
+                              fontFamily: task.descriptionFont || "Arial",
+                              fontSize: task.descriptionFontSize ? task.descriptionFontSize + "px" : "18px",
+                              textAlign: task.textAlignDescription || "center",
+                              wordWrap: "break-word",
+                            }}
+                          >
+                            {task.description}
+                          </div>
+                          
+                          {task.tags && task.tags.length > 0 && (
+                            <div className="flex flex-wrap justify-center gap-2">
+                              {task.tags.map((tag) => (
+                                <span
+                                  key={tag.name}
+                                  className="px-3 py-1 rounded-full text-sm font-medium"
+                                  style={{
+                                    backgroundColor: tag.bgColor,
+                                    color: tag.textColor,
+                                  }}
+                                >
                                   {tag.name}
-                                </option>
+                                </span>
                               ))}
-                          </select>
-                        </div>
-                        <div className="d-flex flex-wrap justify-content-center gap-2 mb-2">
-                          {editingTaskTags.map((tag) => (
-                            <div
-                              key={tag.name}
-                              className="d-flex align-items-center gap-1 rounded px-2 py-1"
-                              style={{
-                                backgroundColor: tag.bgColor,
-                                color: tag.textColor,
-                                margin: "4px",
-                              }}
+                            </div>
+                          )}
+                          
+                          <div className="flex flex-wrap gap-2 justify-center">
+                            <motion.button 
+                              onClick={() => startEditing(task)} 
+                              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-all duration-200"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
                             >
-                              <span>{tag.name}</span>
-                              <button
-                                onClick={() => removeTagFromEditing(tag.name)}
-                                className="btn btn-sm btn-danger"
-                              >
-                                x
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="d-flex justify-content-center gap-2">
-                          <button onClick={saveEditing} className="btn btn-success">
-                            Salvar
-                          </button>
-                          <button onClick={cancelEditing} className="btn btn-secondary">
-                            Cancelar
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="w-100">
-                        {task.priority && (
-                          <div className="priority-number" style={{ color: getPriorityColor(task.priority) }}>
-                            {task.priority}
+                              ✏️ Editar
+                            </motion.button>
+                            <motion.button 
+                              onClick={() => deleteTask(task.id)} 
+                              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-all duration-200"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              🗑️ Excluir
+                            </motion.button>
+                            <motion.button 
+                              onClick={() => toggleTitleAlignment(task.id)} 
+                              className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm transition-all duration-200"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              🔀 Alinhar Título
+                            </motion.button>
+                            <motion.button 
+                              onClick={() => toggleDescAlignment(task.id)} 
+                              className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm transition-all duration-200"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              📝 Alinhar Descrição
+                            </motion.button>
                           </div>
-                        )}
-                        <div
-                          className="title-number"
-                          style={{
-                            color: task.titleTextColor,
-                            fontFamily: task.titleFont || "Arial",
-                            textAlign: task.textAlignTitle || "center",
-                            wordWrap: "break-word",
-                          }}
-                        >
-                          {task.title}
                         </div>
-                        <div
-                          className="description-text"
-                          style={{
-                            color: task.descriptionColor || "#000000",
-                            fontFamily: task.descriptionFont || "Arial",
-                            fontSize: task.descriptionFontSize ? task.descriptionFontSize + "px" : "14px",
-                            textAlign: task.textAlignDescription || "center",
-                            wordWrap: "break-word",
-                          }}
-                        >
-                          {task.description}
-                        </div>
-                        {task.tags && task.tags.length > 0 && (
-                          <div className="d-flex flex-wrap justify-content-center gap-2">
-                            {task.tags.map((tag) => (
-                              <span
-                                key={tag.name}
-                                className="px-2 py-1 rounded"
-                                style={{
-                                  backgroundColor: tag.bgColor,
-                                  color: tag.textColor,
-                                  margin: "4px",
-                                }}
-                              >
-                                {tag.name}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        <div className="d-flex justify-content-center gap-2 mt-2">
-                          <button onClick={() => startEditing(task)} className="btn btn-primary">
-                            Editar
-                          </button>
-                          <button onClick={() => deleteTask(task.id)} className="btn btn-danger">
-                            ❌ Excluir
-                          </button>
-                          <button onClick={() => toggleTitleAlignment(task.id)} className="btn btn-secondary">
-                            Alinhar Título
-                          </button>
-                          <button onClick={() => toggleDescAlignment(task.id)} className="btn btn-secondary">
-                            Alinhar Descrição
-                          </button>
-                          <button onClick={() => setTagEditingTaskId(task.id)} className="btn btn-info">
-                            Gerenciar Tags
-                          </button>
-                        </div>
-                        {tagEditingTaskId === task.id && (
-                          <div className="mt-2">
-                            <div className="input-group mb-2">
-                              <input
-                                type="text"
-                                className="form-control"
-                                placeholder="Digite a tag"
-                                value={tagEditingInput}
-                                onChange={(e) => setTagEditingInput(e.target.value)}
-                              />
-                              <button
-                                onClick={() => handleAddEditingTag(task.id)}
-                                className="btn btn-outline-secondary"
-                              >
-                                Adicionar Tag
-                              </button>
-                            </div>
-                            <div className="d-flex flex-wrap justify-content-center gap-2">
-                              {task.tags &&
-                                task.tags.map((tag) => (
-                                  <div
-                                    key={tag.name}
-                                    className="d-flex align-items-center gap-1 rounded px-2 py-1"
-                                    style={{
-                                      backgroundColor: tag.bgColor,
-                                      color: tag.textColor,
-                                      margin: "4px",
-                                    }}
-                                  >
-                                    <span>{tag.name}</span>
-                                    <button
-                                      onClick={() => handleRemoveTag(task.id, tag.name)}
-                                      className="btn btn-sm btn-danger"
-                                    >
-                                      x
-                                    </button>
-                                  </div>
-                                ))}
-                            </div>
-                            <button onClick={() => setTagEditingTaskId(null)} className="btn btn-secondary btn-sm">
-                              Fechar Gerenciamento de Tags
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        </>
-      )}
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
+              
+              {tasks.length === 0 && (
+                <motion.div 
+                  className="text-center py-12"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <div className="text-6xl mb-4">📝</div>
+                  <p className="text-gray-300 text-xl">Nenhuma tarefa criada ainda</p>
+                  <p className="text-gray-400">Crie sua primeira tarefa acima!</p>
+                </motion.div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
