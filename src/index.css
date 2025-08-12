@@ -92,6 +92,20 @@ body {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 25%, #2d1b69 50%, #1a1a3a 75%, #0f0f23 100%);
   overflow-x: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Wrapper para centralizar toda a tela (login e principal) */
+.app-wrapper {
+  width: 100%;
+  max-width: 960px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Task item spacing */
@@ -111,6 +125,8 @@ body {
   text-align: center;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  margin: 0 auto;
 }
 
 /* Typography */

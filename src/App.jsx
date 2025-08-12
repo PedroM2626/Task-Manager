@@ -3,7 +3,7 @@ import TaskManager from "./TaskManager";
 
 function App() {
   return (
-    <div>
+    <div className="app-wrapper">
       <TaskManager />
     </div>
   );
