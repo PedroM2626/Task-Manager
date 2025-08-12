@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { db, auth, provider, signInWithPopup, signOut } from "./firebaseConfig";
+import { db, auth, provider, storage, storageRef, uploadBytes, getDownloadURL, deleteObject, signInWithPopup, signOut } from "./firebaseConfig";
 import {
   collection,
   addDoc,
@@ -100,6 +100,10 @@ function TaskManager() {
   const [newTaskDescFont, setNewTaskDescFont] = useState("Arial");
   const [newTaskDescFontSize, setNewTaskDescFontSize] = useState("14");
   const [newTaskAreaColor, setNewTaskAreaColor] = useState("#808080");
+  const [newTaskPriorityLabel, setNewTaskPriorityLabel] = useState("medium"); // low | medium | high | urgent
+  const [newTaskStartDate, setNewTaskStartDate] = useState("");
+  const [newTaskDueDate, setNewTaskDueDate] = useState("");
+  const [newTaskFiles, setNewTaskFiles] = useState([]);
 
   // Estados para edição in place da tarefa
   const [editingTaskId, setEditingTaskId] = useState(null);
@@ -114,6 +118,10 @@ function TaskManager() {
   const [editingTaskTags, setEditingTaskTags] = useState([]);
   const [editingTagInput, setEditingTagInput] = useState("");
   const [editingAreaColor, setEditingAreaColor] = useState("");
+  const [editingPriorityLabel, setEditingPriorityLabel] = useState("medium");
+  const [editingStartDate, setEditingStartDate] = useState("");
+  const [editingDueDate, setEditingDueDate] = useState("");
+  const [editingFiles, setEditingFiles] = useState([]);
 
   // Estados para as tags globais
   const [availableTags, setAvailableTags] = useState([]);
@@ -137,6 +145,25 @@ function TaskManager() {
   const [tagFilter, setTagFilter] = useState("");
   const [sortKey, setSortKey] = useState("priority"); // priority | createdAt | updatedAt | progress | title
   const [sortDir, setSortDir] = useState("asc"); // asc | desc
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [viewMode, setViewMode] = useState("list"); // list | board
+  const [toasts, setToasts] = useState([]);
+
+  // Preferências por usuário (salvas em localStorage)
+  const PREFS_KEY = (uid) => `tm_prefs_${uid}`;
+  function loadPreferencesForUser(uid) {
+    try {
+      const raw = localStorage.getItem(PREFS_KEY(uid));
+      if (!raw) return;
+      const prefs = JSON.parse(raw);
+      if (typeof prefs.searchTerm === 'string') setSearchTerm(prefs.searchTerm);
+      if (typeof prefs.statusFilter === 'string') setStatusFilter(prefs.statusFilter);
+      if (typeof prefs.tagFilter === 'string') setTagFilter(prefs.tagFilter);
+      if (typeof prefs.sortKey === 'string') setSortKey(prefs.sortKey);
+      if (typeof prefs.sortDir === 'string') setSortDir(prefs.sortDir);
+    } catch (_) { /* ignore */ }
+  }
 
   // Refs para os elementos contentEditable na edição
   const editingPriorityRef = useRef(null);
@@ -147,12 +174,26 @@ function TaskManager() {
     auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
       if (currentUser) {
+        loadPreferencesForUser(currentUser.uid);
         loadTasks(currentUser.uid);
       } else {
         setTasks([]);
       }
     });
   }, []);
+
+  // Persistência automática das preferências
+  useEffect(() => {
+    if (!user) return;
+    const prefs = {
+      searchTerm,
+      statusFilter,
+      tagFilter,
+      sortKey,
+      sortDir,
+    };
+    try { localStorage.setItem(PREFS_KEY(user.uid), JSON.stringify(prefs)); } catch (_) { /* ignore */ }
+  }, [user, searchTerm, statusFilter, tagFilter, sortKey, sortDir]);
 
   async function loadTasks(userId) {
     const q = query(collection(db, "tasks"), where("userId", "==", userId));
@@ -171,6 +212,10 @@ function TaskManager() {
         })) : [],
         createdAt: data.createdAt || Date.now(),
         updatedAt: data.updatedAt || Date.now(),
+        priorityLabel: data.priorityLabel || 'medium',
+        startDate: data.startDate || '',
+        dueDate: data.dueDate || '',
+        attachments: Array.isArray(data.attachments) ? data.attachments : [],
       };
     });
     const effectiveSort = (task) =>
@@ -258,6 +303,10 @@ function TaskManager() {
       textAlignDescription: "center",
       createdAt: now,
       updatedAt: now,
+      priorityLabel: newTaskPriorityLabel,
+      startDate: newTaskStartDate,
+      dueDate: newTaskDueDate,
+      attachments: [],
     };
     const docRef = await addDoc(collection(db, "tasks"), taskData);
     setTasks(
@@ -267,6 +316,7 @@ function TaskManager() {
           (b.priority && parseInt(b.priority) >= 1 ? parseInt(b.priority) : Infinity)
       )
     );
+    addToast('Tarefa criada com sucesso', 'success');
   }
 
   async function toggleTask(id, completed) {
@@ -281,11 +331,13 @@ function TaskManager() {
     setTasks(
       tasks.map((task) => (task.id === id ? { ...task, completed: newCompleted, subtasks: newSubtasks, updatedAt: Date.now() } : task))
     );
+    addToast(newCompleted ? 'Tarefa concluída' : 'Tarefa reaberta', 'info');
   }
 
   async function deleteTask(id) {
     await deleteDoc(doc(db, "tasks", id));
     setTasks(tasks.filter((task) => task.id !== id));
+    addToast('Tarefa excluída', 'warning');
   }
 
   function startEditing(task) {
@@ -317,6 +369,10 @@ function TaskManager() {
       tags: editingTaskTags,
       areaColor: editingAreaColor,
       updatedAt: Date.now(),
+      priorityLabel: editingPriorityLabel,
+      startDate: editingStartDate,
+      dueDate: editingDueDate,
+      attachments: editingFiles,
     };
     const taskRef = doc(db, "tasks", editingTaskId);
     await updateDoc(taskRef, updatedData);
@@ -388,6 +444,100 @@ function TaskManager() {
   function getProgressPercent(task) {
     const { done, total } = getSubtaskCounts(task);
     return total > 0 ? (done / total) * 100 : 0;
+  }
+
+  function getDueStatus(task) {
+    if (!task.dueDate) return 'none';
+    const now = new Date();
+    const due = new Date(task.dueDate);
+    const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return 'overdue';
+    if (diffDays <= 2) return 'soon';
+    return 'ok';
+  }
+
+  function addToast(message, variant = 'info') {
+    const id = crypto.randomUUID();
+    setToasts((t) => [...t, { id, message, variant }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
+  }
+
+  // Marcar todas subtarefas / limpar concluídas
+  async function setAllSubtasksCompletion(taskId, completed) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const updatedSubtasks = (task.subtasks || []).map((s) => ({ ...s, completed }));
+    const taskRef = doc(db, "tasks", taskId);
+    await updateDoc(taskRef, { subtasks: updatedSubtasks, completed, updatedAt: Date.now() });
+    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks, completed, updatedAt: Date.now() } : t)));
+  }
+
+  async function clearCompletedSubtasks(taskId) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const updatedSubtasks = (task.subtasks || []).filter((s) => !s.completed);
+    const allDone = updatedSubtasks.length > 0 && updatedSubtasks.every((s) => s.completed);
+    const taskRef = doc(db, "tasks", taskId);
+    await updateDoc(taskRef, { subtasks: updatedSubtasks, completed: allDone, updatedAt: Date.now() });
+    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks, completed: allDone, updatedAt: Date.now() } : t)));
+  }
+
+  // Exportar/Importar tarefas
+  const importInputRef = useRef(null);
+
+  function triggerImport() {
+    if (importInputRef.current) importInputRef.current.click();
+  }
+
+  async function handleImportFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const items = Array.isArray(data) ? data : [];
+      const now = Date.now();
+      for (const item of items) {
+        const payload = {
+          title: sanitizeMultilineText(item.title || ""),
+          description: typeof item.description === 'string' ? DOMPurify.sanitize(item.description) : "",
+          userId: user.uid,
+          priority: item.priority ?? null,
+          completed: !!item.completed,
+          tags: Array.isArray(item.tags) ? item.tags : [],
+          subtasks: Array.isArray(item.subtasks) ? item.subtasks.map((s) => ({ id: s.id || crypto.randomUUID(), title: sanitizeMultilineText(s.title || ''), completed: !!s.completed })) : [],
+          titleTextColor: item.titleTextColor || '#ffffff',
+          titleFont: item.titleFont || 'Arial',
+          descriptionColor: item.descriptionColor || '#000000',
+          descriptionFont: item.descriptionFont || 'Arial',
+          descriptionFontSize: item.descriptionFontSize || '14',
+          areaColor: item.areaColor || '#808080',
+          textAlignTitle: item.textAlignTitle || 'center',
+          textAlignDescription: item.textAlignDescription || 'center',
+          createdAt: item.createdAt || now,
+          updatedAt: now,
+        };
+        await addDoc(collection(db, 'tasks'), payload);
+      }
+      await loadTasks(user.uid);
+      alert('Importação concluída.');
+    } catch (err) {
+      console.error(err);
+      alert('Falha ao importar JSON.');
+    } finally {
+      e.target.value = '';
+    }
+  }
+
+  function exportTasks() {
+    const toExport = tasks.map((t) => ({ ...t }));
+    const blob = new Blob([JSON.stringify(toExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tasks-export-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function removeTagFromEditing(tagName) {
@@ -471,6 +621,13 @@ function TaskManager() {
           )}
         </motion.div>
 
+        {/* Toasts */}
+        <div className="fixed top-4 right-4 z-50 space-y-2">
+          {toasts.map((t) => (
+            <div key={t.id} className={`px-4 py-2 rounded shadow text-white ${t.variant === 'success' ? 'bg-emerald-600' : t.variant === 'warning' ? 'bg-amber-600' : 'bg-indigo-600'}`}>{t.message}</div>
+          ))}
+        </div>
+
         {!user ? (
           <div
             className="flex items-center justify-center w-full force-center"
@@ -537,7 +694,13 @@ function TaskManager() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              <h2 className="text-2xl font-bold text-center text-white mb-6">✨ Nova Tarefa</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">✨ Nova Tarefa</h2>
+                <div className="flex items-center gap-2">
+                  <button className={`px-3 py-2 rounded-lg text-sm ${viewMode === 'list' ? 'bg-white/20' : 'bg-white/10'} border border-white/20 text-white`} onClick={() => setViewMode('list')}>Lista</button>
+                  <button className={`px-3 py-2 rounded-lg text-sm ${viewMode === 'board' ? 'bg-white/20' : 'bg-white/10'} border border-white/20 text-white`} onClick={() => setViewMode('board')}>Kanban</button>
+                </div>
+              </div>
               
               <div className="flex flex-wrap gap-3 mb-4">
                 <input
@@ -571,6 +734,16 @@ function TaskManager() {
                     </option>
                   ))}
                 </select>
+                <select
+                  className="px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
+                  value={newTaskPriorityLabel}
+                  onChange={(e) => setNewTaskPriorityLabel(e.target.value)}
+                >
+                  <option value="low" style={{ color: 'black' }}>Low</option>
+                  <option value="medium" style={{ color: 'black' }}>Medium</option>
+                  <option value="high" style={{ color: 'black' }}>High</option>
+                  <option value="urgent" style={{ color: 'black' }}>Urgent</option>
+                </select>
               </div>
               
               <div className="flex gap-3 mb-4">
@@ -599,7 +772,7 @@ function TaskManager() {
                 </div>
               </div>
               
-              <div className="flex gap-3 mb-6">
+              <div className="flex gap-3 mb-6 flex-wrap">
                 <select
                   className="flex-1 px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
                   value={newTaskDescFont}
@@ -617,6 +790,27 @@ function TaskManager() {
                   placeholder="Tamanho da Fonte (ex: 14)"
                   value={newTaskDescFontSize}
                   onChange={(e) => setNewTaskDescFontSize(e.target.value)}
+                />
+                <input
+                  type="date"
+                  className="px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
+                  value={newTaskStartDate}
+                  onChange={(e) => setNewTaskStartDate(e.target.value)}
+                  title="Data de início"
+                />
+                <input
+                  type="date"
+                  className="px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
+                  value={newTaskDueDate}
+                  onChange={(e) => setNewTaskDueDate(e.target.value)}
+                  title="Prazo final"
+                />
+                <input
+                  type="file"
+                  multiple
+                  className="px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none"
+                  onChange={(e) => setNewTaskFiles(Array.from(e.target.files || []))}
+                  title="Anexos"
                 />
               </div>
               
@@ -683,7 +877,33 @@ function TaskManager() {
                   <option value="asc" style={{ color: 'black' }}>Crescente</option>
                   <option value="desc" style={{ color: 'black' }}>Decrescente</option>
                 </select>
+                <input
+                  type="date"
+                  className="px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  title="De (data de início)"
+                />
+                <input
+                  type="date"
+                  className="px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  title="Até (prazo)"
+                />
               </div>
+            </motion.div>
+
+            {/* Ações rápidas: exportar/importar */}
+            <motion.div 
+              className="p-4 rounded-2xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-xl mb-6 flex flex-wrap gap-3 justify-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.18 }}
+            >
+              <motion.button onClick={exportTasks} className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-sm" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>⬇️ Exportar JSON</motion.button>
+              <input ref={importInputRef} type="file" accept="application/json" onChange={handleImportFileChange} style={{ display: 'none' }} />
+              <motion.button onClick={triggerImport} className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>⬆️ Importar JSON</motion.button>
             </motion.div>
 
             {/* Gerenciar Tags Globais */}
@@ -770,7 +990,7 @@ function TaskManager() {
               </div>
             </motion.div>
 
-            {/* Listas Criadas */}
+            {/* Listas Criadas | Board/List */}
             <motion.div 
               className="p-6 rounded-3xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl"
               initial={{ opacity: 0, y: 20 }}
@@ -778,12 +998,51 @@ function TaskManager() {
               transition={{ duration: 0.6, delay: 0.3 }}
             >
               <h2 className="text-2xl font-bold text-center text-white mb-6">📋 Suas Tarefas</h2>
-              
+
+              {viewMode === 'board' ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {['open','doing','done'].map((col) => (
+                    <div key={col} className="rounded-2xl p-4 bg-white/10 border border-white/20 min-h-64"
+                      onDragOver={(e)=>e.preventDefault()}
+                      onDrop={(e)=>{
+                        const id = e.dataTransfer.getData('text/plain');
+                        const t = tasks.find(x=>x.id===id);
+                        if(!t) return;
+                        const updated = tasks.map(x => x.id===id ? { ...x, status: col, completed: col==='done' ? true : x.completed } : x);
+                        setTasks(updated);
+                        const taskRef = doc(db,'tasks',id);
+                        updateDoc(taskRef,{ status: col, completed: col==='done', updatedAt: Date.now() });
+                        addToast('Tarefa movida', 'info');
+                      }}
+                    >
+                      <div className="text-white font-semibold mb-2">
+                        {col === 'open' ? 'Abertas' : col === 'doing' ? 'Em andamento' : 'Concluídas'}
+                      </div>
+                      {tasks
+                        .filter(t=> (col==='open' ? (!t.status || t.status==='open') : t.status===col))
+                        .map(t => (
+                          <div key={t.id} draggable onDragStart={(e)=>e.dataTransfer.setData('text/plain', t.id)} className="rounded-xl p-3 bg-white/20 border border-white/20 mb-3 cursor-move">
+                            <div className="text-white font-semibold mb-1">{t.title}</div>
+                            <div className="text-xs text-gray-200">{(() => { const {done,total}=getSubtaskCounts(t); return `${done}/${total}` })()}</div>
+                          </div>
+                        ))}
+                    </div>
+                  ))}
+                </div>
+              ) : (
               <div className="space-y-4">
                 {tasks
                   .filter((t) => (statusFilter === 'all' ? true : statusFilter === 'done' ? t.completed : !t.completed))
                   .filter((t) => (searchTerm ? t.title.toLowerCase().includes(searchTerm.toLowerCase()) : true))
                   .filter((t) => (tagFilter ? (t.tags || []).some((tg) => tg.name.toLowerCase() === tagFilter.toLowerCase()) : true))
+                  .filter((t) => {
+                    if (!dateFrom && !dateTo) return true;
+                    const start = t.startDate ? new Date(t.startDate) : null;
+                    const due = t.dueDate ? new Date(t.dueDate) : null;
+                    const fromOk = dateFrom ? ((start && start >= new Date(dateFrom)) || (due && due >= new Date(dateFrom))) : true;
+                    const toOk = dateTo ? ((start && start <= new Date(dateTo)) || (due && due <= new Date(dateTo))) : true;
+                    return fromOk && toOk;
+                  })
                   .sort((a, b) => {
                     const dir = sortDir === 'asc' ? 1 : -1;
                     switch (sortKey) {
@@ -825,7 +1084,35 @@ function TaskManager() {
                             <div className="text-xs text-gray-200 mt-1">Progresso: {done}/{total} ({pct}%)</div>
                           </div>
                         )})()}
-                      <div className="flex justify-end mb-4">
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-2">
+                          {/* Badge de prioridade */}
+                          <span className="px-2 py-1 rounded text-xs font-semibold"
+                            style={{
+                              backgroundColor: (
+                                task.priorityLabel === 'urgent' ? '#ef4444' :
+                                task.priorityLabel === 'high' ? '#f59e0b' :
+                                task.priorityLabel === 'medium' ? '#3b82f6' : '#10b981'
+                              ),
+                              color: '#fff'
+                            }}
+                          >
+                            {task.priorityLabel?.toUpperCase() || 'MEDIUM'}
+                          </span>
+                          {/* Datas */}
+                          {task.startDate && <span className="text-xs text-gray-200">Início: {task.startDate}</span>}
+                          {task.dueDate && (
+                            <span className="text-xs px-2 py-1 rounded"
+                              style={{
+                                backgroundColor: (
+                                  getDueStatus(task) === 'overdue' ? 'rgba(239,68,68,0.25)' :
+                                  getDueStatus(task) === 'soon' ? 'rgba(245,158,11,0.25)' : 'rgba(16,185,129,0.25)'
+                                ),
+                                color: '#fff'
+                              }}
+                            >Prazo: {task.dueDate}</span>
+                          )}
+                        </div>
                         <input
                           type="checkbox"
                           checked={task.completed}
@@ -1006,7 +1293,33 @@ function TaskManager() {
                                 </div>
                               ))}
                             </div>
+                            <div className="flex gap-2 justify-center">
+                              <button className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-1 rounded text-xs" onClick={() => setAllSubtasksCompletion(task.id, true)}>Marcar todas</button>
+                              <button className="bg-slate-500 hover:bg-slate-600 text-white px-3 py-1 rounded text-xs" onClick={() => setAllSubtasksCompletion(task.id, false)}>Desmarcar todas</button>
+                              <button className="bg-zinc-600 hover:bg-zinc-700 text-white px-3 py-1 rounded text-xs" onClick={() => clearCompletedSubtasks(task.id)}>Limpar concluídas</button>
+                            </div>
                           </div>
+
+                          {/* Anexos */}
+                          {Array.isArray(task.attachments) && task.attachments.length > 0 && (
+                            <div className="mt-3">
+                              <div className="text-sm text-gray-200 mb-2">Anexos:</div>
+                              <div className="flex flex-wrap gap-3 justify-center">
+                                {task.attachments.map((f) => {
+                                  const isImage = /\.(png|jpg|jpeg|gif|webp|bmp)$/i.test(f.name || f.url);
+                                  return (
+                                    <a key={f.url} href={f.url} target="_blank" rel="noreferrer" className="block">
+                                      {isImage ? (
+                                        <img src={f.url} alt={f.name} className="w-24 h-24 object-cover rounded shadow"/>
+                                      ) : (
+                                        <div className="px-3 py-2 rounded bg-white/10 border border-white/20 text-xs text-white">{f.name || 'Arquivo'}</div>
+                                      )}
+                                    </a>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
 
                           <div className="flex flex-wrap gap-2 justify-center">
                             <motion.button 
@@ -1048,6 +1361,7 @@ function TaskManager() {
                   );
                 })}
               </div>
+              )}
               
               {tasks.length === 0 && (
                 <motion.div 
