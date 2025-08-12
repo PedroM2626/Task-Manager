@@ -11,8 +11,18 @@ import {
   where,
 } from "firebase/firestore";
 import { motion } from "framer-motion";
+import ReactQuill from "react-quill";
+import 'react-quill/dist/quill.snow.css';
+import DOMPurify from 'dompurify';
 
 // Sanitiza textos vindos de inputs e do banco, removendo marcações HTML
+function decodeEntities(html) {
+  if (typeof window === 'undefined') return html;
+  const el = document.createElement('textarea');
+  el.innerHTML = html;
+  return el.value;
+}
+
 function sanitizeMultilineText(raw) {
   if (!raw) return "";
   let text = String(raw);
@@ -23,6 +33,8 @@ function sanitizeMultilineText(raw) {
   text = text.replace(/<[^>]+>/g, "");
   // Evita espaços excessivos preservando quebras
   text = text.replace(/[\t\r]+/g, "");
+  // Decodifica entidades HTML como &nbsp;
+  text = decodeEntities(text);
   return text;
 }
 
@@ -119,6 +131,13 @@ function TaskManager() {
   // Inputs de subtarefas por tarefa
   const [subtaskInputsByTaskId, setSubtaskInputsByTaskId] = useState({});
 
+  // Filtros e busca
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all"); // all | open | done
+  const [tagFilter, setTagFilter] = useState("");
+  const [sortKey, setSortKey] = useState("priority"); // priority | createdAt | updatedAt | progress | title
+  const [sortDir, setSortDir] = useState("asc"); // asc | desc
+
   // Refs para os elementos contentEditable na edição
   const editingPriorityRef = useRef(null);
   const editingTitleRef = useRef(null);
@@ -144,12 +163,14 @@ function TaskManager() {
         id: d.id,
         ...data,
         title: sanitizeMultilineText(data.title),
-        description: sanitizeMultilineText(data.description),
+        description: typeof data.description === 'string' ? data.description : "",
         subtasks: Array.isArray(data.subtasks) ? data.subtasks.map((s) => ({
           id: s.id || crypto.randomUUID(),
           title: sanitizeMultilineText(s.title),
           completed: !!s.completed,
         })) : [],
+        createdAt: data.createdAt || Date.now(),
+        updatedAt: data.updatedAt || Date.now(),
       };
     });
     const effectiveSort = (task) =>
@@ -217,12 +238,14 @@ function TaskManager() {
 
   async function addTask() {
     if (newTaskTitle.trim() === "" || !user) return;
+    const now = Date.now();
     const taskData = {
       priority: newTaskPriority ? parseInt(newTaskPriority) : null,
       title: sanitizeMultilineText(newTaskTitle),
       titleTextColor: newTaskTitleTextColor,
       titleFont: newTaskTitleFont,
-      description: sanitizeMultilineText(newTaskDescription),
+      // Armazenamos HTML sanitizado para preservar formatação
+      description: DOMPurify.sanitize(newTaskDescription || ""),
       descriptionColor: newTaskDescColor,
       descriptionFont: newTaskDescFont,
       descriptionFontSize: newTaskDescFontSize,
@@ -233,6 +256,8 @@ function TaskManager() {
       subtasks: [],
       textAlignTitle: "center",
       textAlignDescription: "center",
+      createdAt: now,
+      updatedAt: now,
     };
     const docRef = await addDoc(collection(db, "tasks"), taskData);
     setTasks(
@@ -252,9 +277,9 @@ function TaskManager() {
       ? current.subtasks.map((s) => ({ ...s, completed: newCompleted }))
       : [];
     const taskRef = doc(db, "tasks", id);
-    await updateDoc(taskRef, { completed: newCompleted, subtasks: newSubtasks });
+    await updateDoc(taskRef, { completed: newCompleted, subtasks: newSubtasks, updatedAt: Date.now() });
     setTasks(
-      tasks.map((task) => (task.id === id ? { ...task, completed: newCompleted, subtasks: newSubtasks } : task))
+      tasks.map((task) => (task.id === id ? { ...task, completed: newCompleted, subtasks: newSubtasks, updatedAt: Date.now() } : task))
     );
   }
 
@@ -285,12 +310,13 @@ function TaskManager() {
       title: sanitizeMultilineText(editingTitle),
       titleTextColor: editingTitleTextColor,
       titleFont: editingTitleFont,
-      description: sanitizeMultilineText(editingDescription),
+      description: DOMPurify.sanitize(editingDescription || ""),
       descriptionColor: editingDescColor,
       descriptionFont: editingDescFont,
       descriptionFontSize: editingDescFontSize,
       tags: editingTaskTags,
       areaColor: editingAreaColor,
+      updatedAt: Date.now(),
     };
     const taskRef = doc(db, "tasks", editingTaskId);
     await updateDoc(taskRef, updatedData);
@@ -331,8 +357,8 @@ function TaskManager() {
     const newSubtask = { id: crypto.randomUUID(), title, completed: false };
     const updatedSubtasks = [...(task.subtasks || []), newSubtask];
     const taskRef = doc(db, "tasks", taskId);
-    await updateDoc(taskRef, { subtasks: updatedSubtasks });
-    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks } : t)));
+    await updateDoc(taskRef, { subtasks: updatedSubtasks, updatedAt: Date.now() });
+    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks, updatedAt: Date.now() } : t)));
     setSubtaskInputsByTaskId({ ...subtaskInputsByTaskId, [taskId]: "" });
   }
 
@@ -345,8 +371,8 @@ function TaskManager() {
     // Se todas subtarefas estiverem concluídas, marca a tarefa como concluída
     const allDone = updatedSubtasks.length > 0 && updatedSubtasks.every((s) => s.completed);
     const taskRef = doc(db, "tasks", taskId);
-    await updateDoc(taskRef, { subtasks: updatedSubtasks, completed: allDone ? true : false });
-    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks, completed: allDone } : t)));
+    await updateDoc(taskRef, { subtasks: updatedSubtasks, completed: allDone ? true : false, updatedAt: Date.now() });
+    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks, completed: allDone, updatedAt: Date.now() } : t)));
   }
 
   async function removeSubtask(taskId, subtaskId) {
@@ -355,8 +381,13 @@ function TaskManager() {
     const updatedSubtasks = (task.subtasks || []).filter((s) => s.id !== subtaskId);
     const allDone = updatedSubtasks.length > 0 && updatedSubtasks.every((s) => s.completed);
     const taskRef = doc(db, "tasks", taskId);
-    await updateDoc(taskRef, { subtasks: updatedSubtasks, completed: allDone });
-    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks, completed: allDone } : t)));
+    await updateDoc(taskRef, { subtasks: updatedSubtasks, completed: allDone, updatedAt: Date.now() });
+    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks, completed: allDone, updatedAt: Date.now() } : t)));
+  }
+
+  function getProgressPercent(task) {
+    const { done, total } = getSubtaskCounts(task);
+    return total > 0 ? (done / total) * 100 : 0;
   }
 
   function removeTagFromEditing(tagName) {
@@ -599,6 +630,62 @@ function TaskManager() {
               </motion.button>
             </motion.div>
 
+            {/* Filtros e busca */}
+            <motion.div 
+              className="p-4 rounded-2xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-xl mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+            >
+              <div className="flex flex-wrap gap-3 justify-center">
+                <input
+                  type="text"
+                  className="px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
+                  placeholder="Buscar por título..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <select
+                  className="px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="all" style={{ color: 'black' }}>Todas</option>
+                  <option value="open" style={{ color: 'black' }}>Abertas</option>
+                  <option value="done" style={{ color: 'black' }}>Concluídas</option>
+                </select>
+                <select
+                  className="px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
+                  value={tagFilter}
+                  onChange={(e) => setTagFilter(e.target.value)}
+                >
+                  <option value="" style={{ color: 'black' }}>Todas as tags</option>
+                  {availableTags.map((t) => (
+                    <option key={t.name} value={t.name} style={{ color: 'black' }}>{t.name}</option>
+                  ))}
+                </select>
+                <select
+                  className="px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value)}
+                >
+                  <option value="priority" style={{ color: 'black' }}>Ordenar por prioridade</option>
+                  <option value="createdAt" style={{ color: 'black' }}>Data de criação</option>
+                  <option value="updatedAt" style={{ color: 'black' }}>Última atualização</option>
+                  <option value="progress" style={{ color: 'black' }}>Progresso</option>
+                  <option value="title" style={{ color: 'black' }}>Título</option>
+                </select>
+                <select
+                  className="px-4 py-2 rounded-xl bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
+                  value={sortDir}
+                  onChange={(e) => setSortDir(e.target.value)}
+                >
+                  <option value="asc" style={{ color: 'black' }}>Crescente</option>
+                  <option value="desc" style={{ color: 'black' }}>Decrescente</option>
+                </select>
+              </div>
+            </motion.div>
+
             {/* Gerenciar Tags Globais */}
             <motion.div 
               className="p-6 rounded-3xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl mb-8"
@@ -693,7 +780,31 @@ function TaskManager() {
               <h2 className="text-2xl font-bold text-center text-white mb-6">📋 Suas Tarefas</h2>
               
               <div className="space-y-4">
-                {tasks.map((task, index) => {
+                {tasks
+                  .filter((t) => (statusFilter === 'all' ? true : statusFilter === 'done' ? t.completed : !t.completed))
+                  .filter((t) => (searchTerm ? t.title.toLowerCase().includes(searchTerm.toLowerCase()) : true))
+                  .filter((t) => (tagFilter ? (t.tags || []).some((tg) => tg.name.toLowerCase() === tagFilter.toLowerCase()) : true))
+                  .sort((a, b) => {
+                    const dir = sortDir === 'asc' ? 1 : -1;
+                    switch (sortKey) {
+                      case 'priority': {
+                        const pa = a.priority ? Number(a.priority) : Number.MAX_SAFE_INTEGER;
+                        const pb = b.priority ? Number(b.priority) : Number.MAX_SAFE_INTEGER;
+                        return (pa - pb) * dir;
+                      }
+                      case 'createdAt':
+                        return ((a.createdAt || 0) - (b.createdAt || 0)) * dir;
+                      case 'updatedAt':
+                        return ((a.updatedAt || 0) - (b.updatedAt || 0)) * dir;
+                      case 'progress':
+                        return (getProgressPercent(a) - getProgressPercent(b)) * dir;
+                      case 'title':
+                        return a.title.localeCompare(b.title) * dir;
+                      default:
+                        return 0;
+                    }
+                  })
+                  .map((task, index) => {
                   const areaBg = task.areaColor || "#808080";
                   return (
                     <motion.div
@@ -705,6 +816,15 @@ function TaskManager() {
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                       whileHover={{ scale: 1.02 }}
                     >
+                        {/* Barra de progresso das subtarefas */}
+                        {(() => { const { done, total } = getSubtaskCounts(task); const pct = total > 0 ? Math.round((done/total)*100) : 0; return (
+                          <div className="w-full mb-3">
+                            <div className="h-2 rounded bg-white/20 overflow-hidden">
+                              <div className="h-2 bg-emerald-500" style={{ width: `${pct}%` }} />
+                            </div>
+                            <div className="text-xs text-gray-200 mt-1">Progresso: {done}/{total} ({pct}%)</div>
+                          </div>
+                        )})()}
                       <div className="flex justify-end mb-4">
                         <input
                           type="checkbox"
@@ -772,21 +892,21 @@ function TaskManager() {
                             </div>
                           </div>
                           
-                          <div
-                            contentEditable
-                            ref={(el) => (editingDescriptionRef.current = el)}
-                            className="description-text px-4 py-3 bg-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
-                            onInput={(e) => {
-                              const saved = saveSelection(editingDescriptionRef.current);
-                              setEditingDescription(e.currentTarget.textContent);
-                              setTimeout(() => {
-                                restoreSelection(editingDescriptionRef.current, saved);
-                              }, 0);
-                            }}
-                            suppressContentEditableWarning={true}
-                            style={{ whiteSpace: "pre-wrap" }}
-                          >
-                            {editingDescription}
+                          <div className="text-left">
+                            <ReactQuill
+                              theme="snow"
+                              value={editingDescription}
+                              onChange={(val) => setEditingDescription(val)}
+                              modules={{
+                                toolbar: [
+                                  [{ header: [1, 2, 3, false] }],
+                                  ['bold', 'italic', 'underline', 'strike'],
+                                  [{ list: 'ordered' }, { list: 'bullet' }],
+                                  [{ color: [] }, { background: [] }],
+                                  ['link', 'clean']
+                                ],
+                              }}
+                            />
                           </div>
                           
                           <div className="flex gap-3 justify-center">
@@ -831,17 +951,11 @@ function TaskManager() {
                             {task.title}
                           </div>
                           
-                          <div
-                            className={`description-text text-lg ${task.completed ? "line-through" : ""}`}
-                            style={{
-                              color: task.descriptionColor || "#000000",
-                              fontFamily: task.descriptionFont || "Arial",
-                              fontSize: task.descriptionFontSize ? task.descriptionFontSize + "px" : "18px",
-                              textAlign: task.textAlignDescription || "center",
-                              wordWrap: "break-word",
-                            }}
-                          >
-                            {task.description}
+                          <div className={`text-lg ${task.completed ? "line-through" : ""}`} style={{ textAlign: task.textAlignDescription || 'center' }}>
+                            <div
+                              className="prose prose-invert max-w-none"
+                              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(task.description || '') }}
+                            />
                           </div>
                           
                           {task.tags && task.tags.length > 0 && (
