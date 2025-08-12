@@ -12,6 +12,20 @@ import {
 } from "firebase/firestore";
 import { motion } from "framer-motion";
 
+// Sanitiza textos vindos de inputs e do banco, removendo marcações HTML
+function sanitizeMultilineText(raw) {
+  if (!raw) return "";
+  let text = String(raw);
+  // Normaliza quebras de linha vindas de tags comuns
+  text = text.replace(/<\s*br\s*\/?\s*>/gi, "\n");
+  text = text.replace(/<\s*\/p\s*>/gi, "\n");
+  // Remove o restante das tags
+  text = text.replace(/<[^>]+>/g, "");
+  // Evita espaços excessivos preservando quebras
+  text = text.replace(/[\t\r]+/g, "");
+  return text;
+}
+
 // Função para salvar a posição do cursor em um elemento contentEditable
 function saveSelection(containerEl) {
   const selection = window.getSelection();
@@ -102,6 +116,9 @@ function TaskManager() {
   // Estado para o usuário
   const [user, setUser] = useState(null);
 
+  // Inputs de subtarefas por tarefa
+  const [subtaskInputsByTaskId, setSubtaskInputsByTaskId] = useState({});
+
   // Refs para os elementos contentEditable na edição
   const editingPriorityRef = useRef(null);
   const editingTitleRef = useRef(null);
@@ -121,7 +138,20 @@ function TaskManager() {
   async function loadTasks(userId) {
     const q = query(collection(db, "tasks"), where("userId", "==", userId));
     const querySnapshot = await getDocs(q);
-    const tasksList = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const tasksList = querySnapshot.docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        ...data,
+        title: sanitizeMultilineText(data.title),
+        description: sanitizeMultilineText(data.description),
+        subtasks: Array.isArray(data.subtasks) ? data.subtasks.map((s) => ({
+          id: s.id || crypto.randomUUID(),
+          title: sanitizeMultilineText(s.title),
+          completed: !!s.completed,
+        })) : [],
+      };
+    });
     const effectiveSort = (task) =>
       task.priority && parseInt(task.priority) >= 1 ? parseInt(task.priority) : Infinity;
     setTasks(tasksList.sort((a, b) => effectiveSort(a) - effectiveSort(b)));
@@ -189,10 +219,10 @@ function TaskManager() {
     if (newTaskTitle.trim() === "" || !user) return;
     const taskData = {
       priority: newTaskPriority ? parseInt(newTaskPriority) : null,
-      title: newTaskTitle,
+      title: sanitizeMultilineText(newTaskTitle),
       titleTextColor: newTaskTitleTextColor,
       titleFont: newTaskTitleFont,
-      description: newTaskDescription,
+      description: sanitizeMultilineText(newTaskDescription),
       descriptionColor: newTaskDescColor,
       descriptionFont: newTaskDescFont,
       descriptionFontSize: newTaskDescFontSize,
@@ -200,6 +230,7 @@ function TaskManager() {
       completed: false,
       userId: user.uid,
       tags: [],
+      subtasks: [],
       textAlignTitle: "center",
       textAlignDescription: "center",
     };
@@ -214,10 +245,16 @@ function TaskManager() {
   }
 
   async function toggleTask(id, completed) {
+    // Se a tarefa tiver subtarefas, ao marcar/desmarcar, espelhar em todas
+    const current = tasks.find((t) => t.id === id);
+    const newCompleted = !completed;
+    const newSubtasks = Array.isArray(current?.subtasks)
+      ? current.subtasks.map((s) => ({ ...s, completed: newCompleted }))
+      : [];
     const taskRef = doc(db, "tasks", id);
-    await updateDoc(taskRef, { completed: !completed });
+    await updateDoc(taskRef, { completed: newCompleted, subtasks: newSubtasks });
     setTasks(
-      tasks.map((task) => (task.id === id ? { ...task, completed: !completed } : task))
+      tasks.map((task) => (task.id === id ? { ...task, completed: newCompleted, subtasks: newSubtasks } : task))
     );
   }
 
@@ -245,10 +282,10 @@ function TaskManager() {
     if (editingTitle.trim() === "" || !editingTaskId) return;
     const updatedData = {
       priority: editingPriority ? parseInt(editingPriority) : null,
-      title: editingTitle,
+      title: sanitizeMultilineText(editingTitle),
       titleTextColor: editingTitleTextColor,
       titleFont: editingTitleFont,
-      description: editingDescription,
+      description: sanitizeMultilineText(editingDescription),
       descriptionColor: editingDescColor,
       descriptionFont: editingDescFont,
       descriptionFontSize: editingDescFontSize,
@@ -278,6 +315,48 @@ function TaskManager() {
     setEditingTaskTags([]);
     setEditingTagInput("");
     setEditingAreaColor("");
+  }
+
+  // ---------- Subtarefas ----------
+  function getSubtaskCounts(task) {
+    const total = Array.isArray(task.subtasks) ? task.subtasks.length : 0;
+    const done = total > 0 ? task.subtasks.filter((s) => s.completed).length : 0;
+    return { done, total };
+  }
+
+  async function addSubtask(taskId) {
+    const title = sanitizeMultilineText(subtaskInputsByTaskId[taskId] || "");
+    if (!title.trim()) return;
+    const task = tasks.find((t) => t.id === taskId);
+    const newSubtask = { id: crypto.randomUUID(), title, completed: false };
+    const updatedSubtasks = [...(task.subtasks || []), newSubtask];
+    const taskRef = doc(db, "tasks", taskId);
+    await updateDoc(taskRef, { subtasks: updatedSubtasks });
+    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks } : t)));
+    setSubtaskInputsByTaskId({ ...subtaskInputsByTaskId, [taskId]: "" });
+  }
+
+  async function toggleSubtask(taskId, subtaskId) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const updatedSubtasks = (task.subtasks || []).map((s) =>
+      s.id === subtaskId ? { ...s, completed: !s.completed } : s
+    );
+    // Se todas subtarefas estiverem concluídas, marca a tarefa como concluída
+    const allDone = updatedSubtasks.length > 0 && updatedSubtasks.every((s) => s.completed);
+    const taskRef = doc(db, "tasks", taskId);
+    await updateDoc(taskRef, { subtasks: updatedSubtasks, completed: allDone ? true : false });
+    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks, completed: allDone } : t)));
+  }
+
+  async function removeSubtask(taskId, subtaskId) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const updatedSubtasks = (task.subtasks || []).filter((s) => s.id !== subtaskId);
+    const allDone = updatedSubtasks.length > 0 && updatedSubtasks.every((s) => s.completed);
+    const taskRef = doc(db, "tasks", taskId);
+    await updateDoc(taskRef, { subtasks: updatedSubtasks, completed: allDone });
+    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks, completed: allDone } : t)));
   }
 
   function removeTagFromEditing(tagName) {
@@ -782,6 +861,39 @@ function TaskManager() {
                             </div>
                           )}
                           
+                          {/* Subtarefas */}
+                          <div className="mt-4 space-y-2">
+                            <div className="flex items-center justify-center gap-2 flex-wrap">
+                              <input
+                                type="text"
+                                className="px-3 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/30 transition-all duration-200"
+                                placeholder="Adicionar subtarefa"
+                                value={subtaskInputsByTaskId[task.id] || ''}
+                                onChange={(e) => setSubtaskInputsByTaskId({ ...subtaskInputsByTaskId, [task.id]: e.target.value })}
+                              />
+                              <motion.button
+                                onClick={() => addSubtask(task.id)}
+                                className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm transition-all duration-200"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                              >
+                                + Subtarefa
+                              </motion.button>
+                              <span className="text-gray-200 text-sm">
+                                {(() => { const {done, total} = getSubtaskCounts(task); return `${done}/${total}` })()}
+                              </span>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              {(task.subtasks || []).map((s) => (
+                                <div key={s.id} className="flex items-center justify-center gap-2">
+                                  <input type="checkbox" className="w-4 h-4" checked={!!s.completed} onChange={() => toggleSubtask(task.id, s.id)} />
+                                  <span className={`text-white ${s.completed ? 'line-through text-gray-300' : ''}`}>{s.title}</span>
+                                  <button className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs" onClick={() => removeSubtask(task.id, s.id)}>x</button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
                           <div className="flex flex-wrap gap-2 justify-center">
                             <motion.button 
                               onClick={() => startEditing(task)} 
