@@ -1594,18 +1594,20 @@ function TaskManager() {
                       <div className="flex justify-between items-center mb-4">
                         <div className="flex items-center gap-2">
                           {/* Badge de prioridade */}
-                          <span className="px-2 py-1 rounded text-xs font-semibold"
-                            style={{
-                              backgroundColor: (
-                                task.priorityLabel === 'urgent' ? '#ef4444' :
-                                task.priorityLabel === 'high' ? '#f59e0b' :
-                                task.priorityLabel === 'medium' ? '#3b82f6' : '#10b981'
-                              ),
-                              color: '#fff'
-                            }}
-                          >
-                            {task.priorityLabel?.toUpperCase() || ''}
-                          </span>
+                          {task.priorityLabel && (
+                            <span className="px-2 py-1 rounded text-xs font-semibold"
+                              style={{
+                                backgroundColor: (
+                                  task.priorityLabel === 'urgent' ? '#ef4444' :
+                                  task.priorityLabel === 'high' ? '#f59e0b' :
+                                  task.priorityLabel === 'medium' ? '#3b82f6' : '#10b981'
+                                ),
+                                color: '#fff'
+                              }}
+                            >
+                              {task.priorityLabel.toUpperCase()}
+                            </span>
+                          )}
                           {/* Datas */}
                           {task.startDate && <span className="text-xs text-gray-200">Início: {task.startDate}</span>}
                           {task.dueDate && (
@@ -1770,14 +1772,6 @@ function TaskManager() {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {task.priority && (
-                            <div 
-                              className="priority-number text-center font-bold text-2xl"
-                              style={{ color: getPriorityColor(task.priority) }}
-                            >
-                              {task.priority}
-                            </div>
-                          )}
                           
                           <div
                             className={`title-number text-3xl font-bold ${task.completed ? "line-through" : ""}`}
